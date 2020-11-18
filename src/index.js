@@ -8,10 +8,8 @@ const getPath = (outPutfolder, fileName) => path.join(process.cwd(), outPutfolde
 export default (output = '', url) => {
   const fileName = `${getFileName(url.toString())}.html`;
   const filepath = getPath(output, fileName);
-  const folderCreateResult = output
-    ? fs.promises.mkdir(output, { recursive: true })
-    : Promise.resolve();
-  folderCreateResult
+  fs.promises
+    .mkdir(path.join(process.cwd(), output), { recursive: true })
     .then(() => {
       axios
         .get(url)
