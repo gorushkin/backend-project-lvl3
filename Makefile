@@ -8,7 +8,7 @@ bin:
 	npx babel-node src/bin/page-loader.js  https://ru.hexlet.io/courses
 
 folder:
-	npx babel-node src/bin/page-loader.js  --output /qwerty https://ru.hexlet.io/courses
+	npx babel-node src/bin/page-loader.js  --output /test https://ru.simplesite.com/
 
 build:
 	npm run build
