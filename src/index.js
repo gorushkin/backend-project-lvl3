@@ -3,12 +3,18 @@ import fs from 'fs';
 import path from 'path';
 import cheerio from 'cheerio';
 
-const getFileName = (url) => url.replace(/https?:\/\//i, '').replace(/[^A-Za-z0-9]/g, '-');
+const getFileName = (url) => {
+  const { hostname, pathname } = new URL(url);
+  const name = pathname.length > 1 ? hostname + pathname : hostname;
+  return name.replace(/https?:\/\//i, '').replace(/[^A-Za-z0-9]/g, '-');
+};
+
 const getPath = (outPutfolder, fileName) => path.join(process.cwd(), outPutfolder, fileName);
 
 export default (output = '', url) => {
-  const fileName = `${getFileName(url.toString())}.html`;
-  const folderName = `${getFileName(url.toString())}_files`;
+  const projectName = getFileName(url);
+  const fileName = `${projectName}.html`;
+  const folderName = `${projectName}_files`;
   const filepath = getPath(output, fileName);
   const folderPath = path.join(output, folderName);
 
@@ -36,8 +42,8 @@ export default (output = '', url) => {
       responseType: 'arraybuffer',
     })
     .then((response) => {
-      const imgPath2 = getPath(folderPath, name);
-      fs.promises.writeFile(imgPath2, response.data, 'utf-8');
+      const imgPath = getPath(folderPath, name);
+      fs.promises.writeFile(imgPath, response.data, 'utf-8');
     }));
 
   return creatingFolder()
