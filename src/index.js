@@ -40,20 +40,24 @@ export default (output, url) => {
       .then(() => Promise.resolve(array));
   };
 
-  const downloadImages = (list) => list
-    .map(({ name, src }) => axios
-      .get(src, {
-        responseType: 'arraybuffer',
-      })
-      .then((response) => {
-        const imgPath = getPath(folderPath, name);
-        fs.promises.writeFile(imgPath, response.data, 'utf-8');
-      }));
+  const downloadImages = (list) => {
+    const promises = list
+      .map(({ name, src }) => axios
+        .get(src, {
+          responseType: 'arraybuffer',
+        })
+        .then((response) => {
+          const imgPath = getPath(folderPath, name);
+          fs.promises.writeFile(imgPath, response.data, 'utf-8');
+        }));
+    const promise = Promise.all(promises);
+    return promise;
+  };
 
   return creatingFolder()
     .then(getHtmlFile)
     .then(getImgSources)
     .then(downloadImages)
-    .then(() => console.log(`${output}${fileName}`))
+    .then(() => `${output}`)
     .catch(console.error);
 };
