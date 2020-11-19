@@ -1,13 +1,11 @@
 install:
 	npm install
 
-start:
-	npm start
 
 bin:
 	node src/bin/page-loader.js  https://ru.simplesite.com/
 
-folder:
+temp:
 	node src/bin/page-loader.js  --output /tmp/gorushkin https://ru.simplesite.com/
 
 build:
