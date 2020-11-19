@@ -12,7 +12,8 @@ const getFilePath = (fileName) => path.join(__dirname, '..', '/__fixtures__/', f
 
 const url = 'https://ru.hexlet.io/courses';
 const fileName1 = 'ru-hexlet-io-courses-01.html';
-const fileName2 = 'ru-hexlet-io-courses-02.html';
+const originalFileName02 = 'ru-hexlet-io-courses-02.html';
+const updatedFileName02 = 'ru-hexlet-io-courses-02--updated.html';
 const projectName = 'ru-hexlet-io-courses';
 const imgName = 'img.jpg';
 
@@ -36,12 +37,28 @@ test('test get/write html', async () => {
 });
 
 test('test get/write img', async () => {
-  const expectedHtml = await fs.promises.readFile(getFilePath(fileName2), 'utf-8');
+  const originalHtml = await fs.promises.readFile(getFilePath(originalFileName02), 'utf-8');
   const expectedImg = await fs.promises.readFile(getFilePath(imgName));
-  nock('https://ru.hexlet.io').get('/courses').reply(200, expectedHtml);
+  nock('https://ru.hexlet.io').get('/courses').reply(200, originalHtml);
   nock('https://ru.hexlet.io').get('/courses/assets/professions/img.jpg').reply(200, expectedImg);
   const dir = await pageLoader(tempDir, url);
   const imgPath = path.join(dir, `${projectName}_files`, imgName);
   const resultImg = await fs.promises.readFile(imgPath);
   expect(expectedImg).toEqual(resultImg);
+});
+
+test('change html', async () => {
+  const originalHtml = await fs.promises.readFile(getFilePath(originalFileName02), 'utf-8');
+  const updatedHtml = await fs.promises.readFile(getFilePath(updatedFileName02), 'utf-8');
+  nock('https://ru.hexlet.io').get('/courses').reply(200, originalHtml);
+  nock('https://ru.hexlet.io').get('/courses/assets/professions/img.jpg').reply(200, 'test');
+
+  const dir = await pageLoader(tempDir, url);
+  const resultHtml = await fs.promises.readFile(
+    path.join(dir, `${projectName}.html`),
+    'utf-8',
+  );
+  expect(prettier.format(resultHtml, { parser: 'html' })).toEqual(
+    prettier.format(updatedHtml, { parser: 'html' }),
+  );
 });
