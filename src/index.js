@@ -20,15 +20,13 @@ export default (output, url) => {
   const folderPath = getPath(pathToProject, folderName);
 
   const creatingFolder = () => {
-    if (output) {
-      return fs.promises.mkdir(folderPath, { recursive: true });
-    }
-    return fs.promises.mkdir(folderName, { recursive: true });
+    const outPath = output ? folderPath : folderName;
+    return fs.promises.mkdir(outPath, { recursive: true });
   };
 
   const getHtmlFile = () => axios
     .get(url)
-    .then((response) => cheerio.load(response.data.toString()));
+    .then((response) => cheerio.load(response.data.toString(), { decodeEntities: false }));
 
   const getImgSources = (html) => {
     const array = [];

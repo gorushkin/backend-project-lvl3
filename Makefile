@@ -5,10 +5,10 @@ start:
 	npm start
 
 bin:
-	npx babel-node src/bin/page-loader.js  https://ru.simplesite.com/
+	node src/bin/page-loader.js  https://ru.simplesite.com/
 
 folder:
-	npx babel-node src/bin/page-loader.js  --output /tmp/gorushkin https://ru.simplesite.com/
+	node src/bin/page-loader.js  --output /tmp/gorushkin https://ru.simplesite.com/
 
 build:
 	npm run build

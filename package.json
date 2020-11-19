@@ -3,14 +3,20 @@
   "version": "1.0.0",
   "description": "page-loader",
   "main": "index.js",
+  "type": "module",
   "bin": {
-    "page-loader": "dist/bin/page-loader.js"
+    "page-loader": "src/bin/page-loader.js"
   },
   "scripts": {
     "test": "jest",
-    "build": "NODE_ENV=production babel src --out-dir dist --source-maps inline",
+    "build2": "NODE_ENV=production babel src --out-dir dist --source-maps inline",
+    "build": "NODE_ENV=production src --out-dir dist --source-maps inline",
     "prepublishOnly": "npm run build",
     "start": "node src/index.js"
+  },
+  "jest": {
+    "verbose": true,
+    "prettierPath": "prettier"
   },
   "repository": {
     "type": "git",
@@ -34,7 +40,8 @@
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-jest": "^24.1.1",
     "jest": "^26.6.3",
-    "nock": "^13.0.5"
+    "nock": "^13.0.5",
+    "prettier": "2.1.2"
   },
   "dependencies": {
     "axios": "^0.21.0",
