@@ -5,7 +5,7 @@ start:
 	npm start
 
 bin:
-	npx babel-node src/bin/page-loader.js  https://ru.hexlet.io/courses
+	npx babel-node src/bin/page-loader.js  https://ru.simplesite.com/
 
 folder:
 	npx babel-node src/bin/page-loader.js  --output /tmp/gorushkin https://ru.simplesite.com/

@@ -23,36 +23,39 @@ export default (output, url) => {
     if (output) {
       return fs.promises.mkdir(folderPath, { recursive: true });
     }
-    return Promise.resolve();
+    return fs.promises.mkdir(folderName, { recursive: true });
   };
 
   const getHtmlFile = () => axios
-    .get(url).then((response) => {
-      fs.promises.writeFile(filePath, response.data.toString(), 'utf-8');
-      return response.data;
-    });
+    .get(url)
+    .then((response) => cheerio.load(response.data.toString()));
 
-  const getImgSources = (data) => {
+  const getImgSources = (html) => {
     const array = [];
-    const $ = cheerio.load(data);
-    $('img').each((i, elem) => {
-      const src = url + $(elem).attr('src');
+    html('img').each((i, elem) => {
+      const src = url + html(elem).attr('src');
       const name = path.posix.basename(src);
+      html(elem).attr('src', getPath(folderName, name));
       array.push({ name, src });
     });
-    return Promise.resolve(array);
+    return fs.promises.writeFile(filePath, html.html(), 'utf-8')
+      .then(() => Promise.resolve(array));
   };
 
-  const downloadImages = (list) => list.map(({ name, src }) => axios
-    .get(src, {
-      responseType: 'arraybuffer',
-    })
-    .then((response) => {
-      const imgPath = getPath(folderPath, name);
-      fs.promises.writeFile(imgPath, response.data, 'utf-8');
-    }));
+  const downloadImages = (list) => list
+    .map(({ name, src }) => axios
+      .get(src, {
+        responseType: 'arraybuffer',
+      })
+      .then((response) => {
+        const imgPath = getPath(folderPath, name);
+        fs.promises.writeFile(imgPath, response.data, 'utf-8');
+      }));
 
-  return creatingFolder().then(getHtmlFile).then(getImgSources).then(downloadImages)
+  return creatingFolder()
+    .then(getHtmlFile)
+    .then(getImgSources)
+    .then(downloadImages)
     .then(() => console.log(`${output}${fileName}`))
     .catch(console.error);
 };
