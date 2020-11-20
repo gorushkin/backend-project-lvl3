@@ -9,7 +9,7 @@ const getFileName = (url) => {
   return name.replace(/https?:\/\//i, '').replace(/[^A-Za-z0-9]/g, '-');
 };
 
-const getPath = (outPutfolder, fileName) => path.join(outPutfolder, fileName);
+const getPath = (folder, fileName) => path.join(folder, fileName);
 
 export default (output, url) => {
   const pathToProject = output || process.cwd();
@@ -19,7 +19,7 @@ export default (output, url) => {
   const filePath = getPath(pathToProject, fileName);
   const folderPath = getPath(pathToProject, folderName);
 
-  const creatingFolder = () => {
+  const createFolder = () => {
     const outPath = output ? folderPath : folderName;
     return fs.promises.mkdir(outPath, { recursive: true });
   };
@@ -29,15 +29,15 @@ export default (output, url) => {
     .then((response) => cheerio.load(response.data.toString(), { decodeEntities: false }));
 
   const getImgSources = (html) => {
-    const array = [];
+    const imgSources = [];
     html('img').each((i, elem) => {
       const src = url + html(elem).attr('src');
       const name = path.posix.basename(src);
       html(elem).attr('src', getPath(folderName, name));
-      array.push({ name, src });
+      imgSources.push({ name, src });
     });
     return fs.promises.writeFile(filePath, html.html(), 'utf-8')
-      .then(() => Promise.resolve(array));
+      .then(() => Promise.resolve(imgSources));
   };
 
   const downloadImages = (list) => {
@@ -54,7 +54,7 @@ export default (output, url) => {
     return promise;
   };
 
-  return creatingFolder()
+  return createFolder()
     .then(getHtmlFile)
     .then(getImgSources)
     .then(downloadImages)
