@@ -23,16 +23,16 @@ const projectName = 'ru-hexlet-io-courses';
 const imgName = 'img.jpg';
 
 let tempDir;
+let originalHtml;
 nock.disableNetConnect();
 
 beforeEach(async () => {
   tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
+  originalHtml = await fs.promises.readFile(getFilePath(originalFileName), 'utf-8');
 });
 
 test('test get/write img', async () => {
-  const originalHtml = await fs.promises.readFile(getFilePath(originalFileName), 'utf-8');
   const expectedImg = await fs.promises.readFile(getFilePath(imgName));
-
   nock('https://ru.hexlet.io').get('/courses').reply(200, originalHtml);
   nock('https://ru.hexlet.io').get('/courses/assets/professions/img.jpg').reply(200, expectedImg);
 
@@ -43,7 +43,6 @@ test('test get/write img', async () => {
 });
 
 test('test get/write html', async () => {
-  const originalHtml = await fs.promises.readFile(getFilePath(originalFileName), 'utf-8');
   const updatedHtml = await fs.promises.readFile(getFilePath(updatedFileName), 'utf-8');
   nock('https://ru.hexlet.io').get('/courses').reply(200, originalHtml);
   nock('https://ru.hexlet.io').get('/courses/assets/professions/img.jpg').reply(200, 'test');
