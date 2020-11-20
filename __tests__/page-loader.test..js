@@ -16,8 +16,8 @@ const __dirname = dirname(__filename);
 const getFilePath = (fileName) => path.join(__dirname, '..', '/__fixtures__/', fileName);
 
 const url = 'https://ru.hexlet.io/courses';
-const originalFileName = 'ru-hexlet-io-courses.html';
-const updatedFileName = 'ru-hexlet-io-courses--updated.html';
+const originalFilename = 'ru-hexlet-io-courses.html';
+const updatedFilename = 'ru-hexlet-io-courses--updated.html';
 const projectName = 'ru-hexlet-io-courses';
 const imgName = 'img.jpg';
 
@@ -27,12 +27,12 @@ nock.disableNetConnect();
 
 beforeEach(async () => {
   tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-  originalHtml = await fs.promises.readFile(getFilePath(originalFileName), 'utf-8');
+  originalHtml = await fs.promises.readFile(getFilePath(originalFilename), 'utf-8');
+  nock('https://ru.hexlet.io').get('/courses').reply(200, originalHtml);
 });
 
 test('test get/write img', async () => {
   const expectedImg = await fs.promises.readFile(getFilePath(imgName));
-  nock('https://ru.hexlet.io').get('/courses').reply(200, originalHtml);
   nock('https://ru.hexlet.io').get('/courses/assets/professions/img.jpg').reply(200, expectedImg);
 
   const dir = await pageLoader(tempDir, url);
@@ -42,8 +42,7 @@ test('test get/write img', async () => {
 });
 
 test('test get/write html', async () => {
-  const updatedHtml = await fs.promises.readFile(getFilePath(updatedFileName), 'utf-8');
-  nock('https://ru.hexlet.io').get('/courses').reply(200, originalHtml);
+  const updatedHtml = await fs.promises.readFile(getFilePath(updatedFilename), 'utf-8');
   nock('https://ru.hexlet.io').get('/courses/assets/professions/img.jpg').reply(200, 'test');
 
   const dir = await pageLoader(tempDir, url);
