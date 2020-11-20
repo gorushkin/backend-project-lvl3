@@ -2,7 +2,6 @@
 ---
 
 plugins:
-  - babel
   - import
   - jest
 
@@ -17,3 +16,5 @@ extends:
 
 rules:
   no-console: 0
+  no-underscore-dangle:  ["error", { "allow": ["__filename", "__dirname"] }]
+  import/extensions: off

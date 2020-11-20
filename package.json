@@ -9,8 +9,6 @@
   },
   "scripts": {
     "test": "NODE_OPTIONS=--experimental-vm-modules npx jest",
-    "build2": "NODE_ENV=production babel src --out-dir dist --source-maps inline",
-    "build": "NODE_ENV=production src --out-dir dist --source-maps inline",
     "prepublishOnly": "npm run build",
     "start": "node src/index.js"
   },
