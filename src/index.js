@@ -9,10 +9,11 @@ const getProjectName = (url) => {
   return name.replace(/https?:\/\//i, '').replace(/[^A-Za-z0-9]/g, '-');
 };
 
-const getPath = (folder, filename) => path.join(folder, filename);
+const getPath = (arg1, arg2) => path.join(arg1, arg2);
 
-const createAssetsFolder = (output, assetsFolderName) => fs
-  .promises.mkdir(getPath(output, assetsFolderName), { recursive: true }).catch(() => {
+const createAssetsFolder = (assetsFolderPath) => fs
+  .promises.mkdir(assetsFolderPath).catch((e) => {
+    console.log(e);
     throw new Error('There is no such directory');
   });
 
@@ -56,13 +57,13 @@ const downloadImages = (list, folderPath) => {
 
 export default (output, url) => {
   const targetUrl = new URL(url);
-  const pathToProject = output || process.cwd();
+  const pathToProject = path.isAbsolute(output) ? output : getPath(process.cwd(), output);
   const projectName = getProjectName(url);
   const filePath = getPath(pathToProject, `${projectName}.html`);
   const assetsFolderName = `${projectName}_files`;
   const assetsFolderPath = getPath(pathToProject, assetsFolderName);
 
-  return createAssetsFolder(output, assetsFolderName)
+  return createAssetsFolder(assetsFolderPath)
     .then(() => getHtmlFile(targetUrl))
     .then((html) => getImgSources(html, targetUrl, assetsFolderName, filePath))
     .then((list) => downloadImages(list, assetsFolderPath))
