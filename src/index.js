@@ -12,8 +12,7 @@ const getProjectName = (url) => {
 const getPath = (arg1, arg2) => path.join(arg1, arg2);
 
 const createAssetsFolder = (assetsFolderPath) => fs
-  .promises.mkdir(assetsFolderPath).catch((e) => {
-    console.log(e);
+  .promises.mkdir(assetsFolderPath).catch(() => {
     throw new Error('There is no such directory');
   });
 
