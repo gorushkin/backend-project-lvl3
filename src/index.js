@@ -20,7 +20,7 @@ const getHtmlFile = (targetUrl) => axios
   .get(targetUrl.href)
   .then((response) => cheerio.load(response.data.toString(), { decodeEntities: false }));
 
-const IsSourceLocal = (src, url) => {
+const IsElementSourceLocal = (src, url) => {
   try {
     return new URL(src).origin === url.origin;
   } catch {
@@ -32,7 +32,7 @@ const getImgSources = (html, url, assetsFolderName, filePath) => {
   const imgSources = [];
   html('img').each((i, elem) => {
     const elementSource = html(elem).attr('src');
-    if (IsSourceLocal(elementSource, url)) {
+    if (IsElementSourceLocal(elementSource, url)) {
       const source = (new URL(elementSource, url.href)).href;
       const name = path.posix.basename(source);
       html(elem).attr('src', getPath(assetsFolderName, name));
@@ -49,13 +49,12 @@ const downloadImages = (list, folderPath) => {
     })
     .then((response) => {
       const imgPath = getPath(folderPath, name);
-      fs.promises.writeFile(imgPath, response.data, 'utf-8');
+      return fs.promises.writeFile(imgPath, response.data, 'utf-8');
     }));
   return Promise.all(promises);
 };
 
 export default (output, url) => {
-  console.log('url: ', url);
   const targetUrl = new URL(url);
   const pathToProject = output || process.cwd();
   const projectName = getProjectName(url);
@@ -67,6 +66,6 @@ export default (output, url) => {
     .then(() => getHtmlFile(targetUrl))
     .then((html) => getImgSources(html, targetUrl, assetsFolderName, filePath))
     .then((list) => downloadImages(list, assetsFolderPath))
-    .then(() => `${output}`)
+    .then(() => `${pathToProject}`)
     .catch(console.error);
 };
