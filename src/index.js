@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import cheerio from 'cheerio';
 
-const getProjectName = (url) => {
+const updateName = (url) => {
   const { hostname, pathname } = new URL(url);
   const name = pathname.length > 1 ? hostname + pathname : hostname;
   return name.replace(/https?:\/\//i, '').replace(/[^A-Za-z0-9]/g, '-');
@@ -12,7 +12,7 @@ const getProjectName = (url) => {
 const getPath = (arg1, arg2) => path.join(arg1, arg2);
 
 const createAssetsFolder = (assetsFolderPath) => fs
-  .promises.mkdir(assetsFolderPath).catch(() => {
+  .promises.mkdir(assetsFolderPath, { recursive: true }).catch(() => {
     throw new Error('There is no such directory');
   });
 
@@ -34,7 +34,9 @@ const getImgSources = (html, url, assetsFolderName, filePath) => {
     const elementSource = html(elem).attr('src');
     if (IsElementSourceLocal(elementSource, url)) {
       const source = (new URL(elementSource, url.href)).href;
-      const name = path.posix.basename(source);
+      const namePrefix = updateName(path.dirname(source));
+      const sourceFileName = path.posix.basename(source);
+      const name = `${namePrefix}-${sourceFileName}`;
       html(elem).attr('src', getPath(assetsFolderName, name));
       imgSources.push({ name, source });
     }
@@ -57,7 +59,7 @@ const downloadImages = (list, folderPath) => {
 export default (output, url) => {
   const targetUrl = new URL(url);
   const pathToProject = path.isAbsolute(output) ? output : getPath(process.cwd(), output);
-  const projectName = getProjectName(url);
+  const projectName = updateName(url);
   const filePath = getPath(pathToProject, `${projectName}.html`);
   const assetsFolderName = `${projectName}_files`;
   const assetsFolderPath = getPath(pathToProject, assetsFolderName);

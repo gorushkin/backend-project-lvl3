@@ -20,7 +20,10 @@ const inputFilename = 'ru-hexlet-io-courses--input.html';
 const outputFilename = 'ru-hexlet-io-courses--output.html';
 const projectName = 'ru-hexlet-io-courses';
 const inputImgName = 'img.jpg';
-const outputImgNames = ['img01.jpg', 'img02.jpg'];
+const outputImgNames = [
+  'ru-hexlet-io-assets-professions-img01.jpg',
+  'ru-hexlet-io-assets-professions-img02.jpg',
+];
 
 let tempDir;
 let inputHtml;
@@ -43,6 +46,7 @@ test('test get/write html', async () => {
     prettier.format(expectedHtml, { parser: 'html' }),
   );
 });
+
 test('test get/write img', async () => {
   const expectedImg = await fs.promises.readFile(getFilePath(inputImgName));
   nock('https://ru.hexlet.io').get('/assets/professions/img01.jpg').reply(200, expectedImg);
@@ -50,7 +54,6 @@ test('test get/write img', async () => {
 
   const dir = await pageLoader(tempDir, url);
   const imgPaths = outputImgNames.map((outputImgName) => path.join(dir, `${projectName}_files`, outputImgName));
-
   const results = await Promise.all(imgPaths.map(async (imgPath) => fs.promises.readFile(imgPath)));
   results.forEach((img) => {
     expect(expectedImg).toEqual(img);
