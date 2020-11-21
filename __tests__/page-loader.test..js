@@ -33,7 +33,7 @@ beforeEach(async () => {
 
 test('test get/write img', async () => {
   const expectedImg = await fs.promises.readFile(getFilePath(imgName));
-  nock('https://ru.hexlet.io').get('/courses/assets/professions/img.jpg').reply(200, expectedImg);
+  nock('https://ru.hexlet.io').get('/assets/professions/img.jpg').reply(200, expectedImg);
 
   const dir = await pageLoader(tempDir, url);
   const imgPath = path.join(dir, `${projectName}_files`, imgName);
@@ -43,7 +43,7 @@ test('test get/write img', async () => {
 
 test('test get/write html', async () => {
   const updatedHtml = await fs.promises.readFile(getFilePath(updatedFilename), 'utf-8');
-  nock('https://ru.hexlet.io').get('/courses/assets/professions/img.jpg').reply(200, 'test');
+  nock('https://ru.hexlet.io').get('/assets/professions/img.jpg').reply(200, 'test');
 
   const dir = await pageLoader(tempDir, url);
   const resultHtml = await fs.promises.readFile(path.join(dir, `${projectName}.html`), 'utf-8');

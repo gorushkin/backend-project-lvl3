@@ -20,13 +20,24 @@ const getHtmlFile = (targetUrl) => axios
   .get(targetUrl.href)
   .then((response) => cheerio.load(response.data.toString(), { decodeEntities: false }));
 
+const IsSourceLocal = (src, url) => {
+  try {
+    return new URL(src).origin === url.origin;
+  } catch {
+    return true;
+  }
+};
+
 const getImgSources = (html, url, assetsFolderName, filePath) => {
   const imgSources = [];
   html('img').each((i, elem) => {
-    const source = new URL(`${url.pathname + html(elem).attr('src')}`, url.href).href;
-    const name = path.posix.basename(source);
-    html(elem).attr('src', getPath(assetsFolderName, name));
-    imgSources.push({ name, source });
+    const elementSource = html(elem).attr('src');
+    if (IsSourceLocal(elementSource, url)) {
+      const source = (new URL(elementSource, url.href)).href;
+      const name = path.posix.basename(source);
+      html(elem).attr('src', getPath(assetsFolderName, name));
+      imgSources.push({ name, source });
+    }
   });
   return fs.promises.writeFile(filePath, html.html(), 'utf-8').then(() => imgSources);
 };
@@ -44,18 +55,18 @@ const downloadImages = (list, folderPath) => {
 };
 
 export default (output, url) => {
+  console.log('url: ', url);
   const targetUrl = new URL(url);
   const pathToProject = output || process.cwd();
   const projectName = getProjectName(url);
-  const filename = `${projectName}.html`;
+  const filePath = getPath(pathToProject, `${projectName}.html`);
   const assetsFolderName = `${projectName}_files`;
-  const filePath = getPath(pathToProject, filename);
-  const folderPath = getPath(pathToProject, assetsFolderName);
+  const assetsFolderPath = getPath(pathToProject, assetsFolderName);
 
   return createAssetsFolder(output, assetsFolderName)
     .then(() => getHtmlFile(targetUrl))
     .then((html) => getImgSources(html, targetUrl, assetsFolderName, filePath))
-    .then((list) => downloadImages(list, folderPath))
+    .then((list) => downloadImages(list, assetsFolderPath))
     .then(() => `${output}`)
     .catch(console.error);
 };
