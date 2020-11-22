@@ -2,6 +2,8 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import cheerio from 'cheerio';
+import iconv from 'iconv-lite';
+import jschardet from 'jschardet';
 
 const updateName = (url) => {
   const { host, pathname } = new URL(url);
@@ -16,30 +18,74 @@ const createAssetsFolder = (assetsFolderPath) => fs
     throw new Error('There is no such directory');
   });
 
-const getHtmlFile = (targetUrl) => axios
-  .get(targetUrl.href)
-  .then((response) => cheerio.load(response.data.toString(), { decodeEntities: false }));
-
-const isElementSourceGlobal = (src, url) => {
-  try {
-    return new URL(src).origin !== url.origin;
-  } catch {
-    return false;
+const getSourceEncoding = ({ encoding }) => {
+  switch (encoding) {
+    case 'windows-1251': {
+      return 'win1251';
+    }
+    case 'windows-1252': {
+      return 'win1252';
+    }
+    default: {
+      return 'UTF-8';
+    }
   }
 };
+
+const getHtmlFile = (targetUrl) => axios
+  .get(targetUrl.href, {
+    responseType: 'arraybuffer',
+    reponseEncoding: 'binary',
+  })
+  .then((response) => {
+    const charsetMatch = getSourceEncoding(jschardet.detect(response.data));
+    const correcttext = iconv.decode(response.data, charsetMatch);
+    return cheerio.load(correcttext, { decodeEntities: false });
+  });
+
+const getElementName = (source) => {
+  const namePrefix = updateName(path.dirname(source));
+  const sourceFileName = path.posix.basename(source);
+  return `${namePrefix}-${sourceFileName}`;
+};
+
+const isUrlAbsolute = (url) => (/^(?:[a-z]+:)?\/\//i).test(url);
+
+const getSource = (elementSource, url) => {
+  if (elementSource.substring(0, 2) === '//') return (new URL(elementSource, url.origin)).href;
+  if (isUrlAbsolute(elementSource)) return elementSource;
+  const { pathname } = url;
+  const currentImgPath = pathname.split('/').filter((item) => item.length > 1);
+  const stepUp = elementSource.split('../').length - 1;
+  const src = elementSource.replace(/\..\//g, '');
+  const prefix = currentImgPath.splice(0, stepUp).join('/');
+  return (new URL(path.join(prefix, src), url.origin)).href;
+};
+
+const IsElementSourceLocal = (src, url) => {
+  if (src.substring(0, 2) === '//') {
+    return true;
+  }
+  if (isUrlAbsolute(src)) {
+    return new URL(src).origin === url.origin;
+  }
+  return true;
+};
+
+const isElementSourceCorrect = (elementSource, url) => elementSource
+  && IsElementSourceLocal(elementSource, url)
+  && elementSource !== url.href;
 
 const getImgSources = (html, url, assetsFolderName, filePath) => {
   const imgSources = html('img').toArray().map((elem) => {
     const elementSource = html(elem).attr('src');
-    if (isElementSourceGlobal(elementSource, url)) {
-      return false;
+    if (isElementSourceCorrect(elementSource, url)) {
+      const source = getSource(elementSource, url);
+      const name = getElementName(source);
+      html(elem).attr('src', getPath(assetsFolderName, name));
+      return { name, source };
     }
-    const source = (new URL(elementSource, url.href)).href;
-    const namePrefix = updateName(path.dirname(source));
-    const sourceFileName = path.posix.basename(source);
-    const name = `${namePrefix}-${sourceFileName}`;
-    html(elem).attr('src', getPath(assetsFolderName, name));
-    return { name, source };
+    return false;
   });
   return fs.promises.writeFile(filePath, html.html(), 'utf-8').then(() => imgSources);
 };
@@ -49,10 +95,11 @@ const downloadImages = (list, folderPath) => {
     .get(source, {
       responseType: 'arraybuffer',
     })
+    .catch((err) => console.log(source, err.message))
     .then((response) => {
       const imgPath = getPath(folderPath, name);
       return fs.promises.writeFile(imgPath, response.data, 'utf-8');
-    }));
+    }).catch((err) => console.log(err.message)));
   return Promise.all(promises);
 };
 
@@ -64,9 +111,15 @@ export default (output, url) => {
   const assetsFolderName = `${projectName}_files`;
   const assetsFolderPath = getPath(pathToProject, assetsFolderName);
 
+  const elements = {
+    img: 'src',
+    // link: 'href',
+    // script: 'src',
+  };
+
   return createAssetsFolder(assetsFolderPath)
     .then(() => getHtmlFile(targetUrl))
-    .then((html) => getImgSources(html, targetUrl, assetsFolderName, filePath))
+    .then((html) => getImgSources(html, targetUrl, assetsFolderName, filePath, elements))
     .then((list) => downloadImages(list, assetsFolderPath))
     .then(() => pathToProject)
     .catch(console.error);
