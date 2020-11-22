@@ -86,7 +86,11 @@ const getSources = (html, url, assetsFolderName, filePath, list) => {
       const elementSource = html(elem).attr(tagHref);
       const source = getSource(elementSource, url);
       const name = getElementName(source);
-      html(elem).attr(tagHref, getPath(assetsFolderName, name));
+      if (elem.attribs.rel === 'canonical') {
+        html(elem).attr(tagHref, getPath(assetsFolderName, `${name}.html`));
+      } else {
+        html(elem).attr(tagHref, getPath(assetsFolderName, name));
+      }
       return { name, source };
     });
     return [...acc, ...imgSources];
