@@ -27,18 +27,20 @@ const outputImgNames = [
 
 let tempDir;
 let inputHtml;
+let expectedImg;
 nock.disableNetConnect();
 
 beforeEach(async () => {
   tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
   inputHtml = await fs.promises.readFile(getFilePath(inputFilename), 'utf-8');
+  expectedImg = await fs.promises.readFile(getFilePath(inputImgName));
   nock('https://ru.hexlet.io').get('/courses').reply(200, inputHtml);
+  nock('https://ru.hexlet.io').get('/assets/professions/img01.jpg').reply(200, expectedImg);
+  nock('https://ru.hexlet.io').get('/assets/professions/img02.jpg').reply(200, expectedImg);
 });
 
 test('test get/write html', async () => {
   const expectedHtml = await fs.promises.readFile(getFilePath(outputFilename), 'utf-8');
-  nock('https://ru.hexlet.io').get('/assets/professions/img01.jpg').reply(200, 'test');
-  nock('https://ru.hexlet.io').get('/assets/professions/img02.jpg').reply(200, 'test');
 
   const dir = await pageLoader(tempDir, url);
   const resultHtml = await fs.promises.readFile(path.join(dir, `${projectName}.html`), 'utf-8');
@@ -48,10 +50,6 @@ test('test get/write html', async () => {
 });
 
 test('test get/write img', async () => {
-  const expectedImg = await fs.promises.readFile(getFilePath(inputImgName));
-  nock('https://ru.hexlet.io').get('/assets/professions/img01.jpg').reply(200, expectedImg);
-  nock('https://ru.hexlet.io').get('/assets/professions/img02.jpg').reply(200, expectedImg);
-
   const dir = await pageLoader(tempDir, url);
   const imgPaths = outputImgNames.map((outputImgName) => path.join(dir, `${projectName}_files`, outputImgName));
   const results = await Promise.all(imgPaths.map(async (imgPath) => fs.promises.readFile(imgPath)));
@@ -59,3 +57,16 @@ test('test get/write img', async () => {
     expect(expectedImg).toEqual(img);
   });
 });
+
+// test('test get/write css', async () => {
+//   const expectedImg = await fs.promises.readFile(getFilePath(inputImgName));
+//   nock('https://ru.hexlet.io').get('/assets/professions/img01.jpg').reply(200, 'test');
+//   nock('https://ru.hexlet.io').get('/assets/professions/img02.jpg').reply(200, 'test');
+
+//   const dir = await pageLoader(tempDir, url);
+//   const imgPaths = outputImgNames.map((outputImgName) => path.join(dir, `${projectName}_files`, outputImgName));
+//   const results = await Promise.all(imgPaths.map(async (imgPath) => fs.promises.readFile(imgPath)));
+//   results.forEach((img) => {
+//     expect(expectedImg).toEqual(img);
+//   });
+// });
