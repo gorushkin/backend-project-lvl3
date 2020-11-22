@@ -76,21 +76,25 @@ const isElementSourceCorrect = (elementSource, url) => elementSource
   && IsElementSourceLocal(elementSource, url)
   && elementSource !== url.href;
 
-const getImgSources = (html, url, assetsFolderName, filePath) => {
-  const imgSources = html('img').toArray().map((elem) => {
-    const elementSource = html(elem).attr('src');
-    if (isElementSourceCorrect(elementSource, url)) {
+const getSources = (html, url, assetsFolderName, filePath, list) => {
+  const sources = Object.keys(list).reduce((acc, tagName) => {
+    const tagHref = list[tagName];
+    const imgSources = html(tagName).toArray().filter((elem) => {
+      const elementSource = html(elem).attr(tagHref);
+      return isElementSourceCorrect(elementSource, url);
+    }).map((elem) => {
+      const elementSource = html(elem).attr(tagHref);
       const source = getSource(elementSource, url);
       const name = getElementName(source);
-      html(elem).attr('src', getPath(assetsFolderName, name));
+      html(elem).attr(tagHref, getPath(assetsFolderName, name));
       return { name, source };
-    }
-    return false;
-  });
-  return fs.promises.writeFile(filePath, html.html(), 'utf-8').then(() => imgSources);
+    });
+    return [...acc, ...imgSources];
+  }, []);
+  return fs.promises.writeFile(filePath, html.html(), 'utf-8').then(() => sources);
 };
 
-const downloadImages = (list, folderPath) => {
+const downloadElements = (list, folderPath) => {
   const promises = list.map(({ name, source }) => axios
     .get(source, {
       responseType: 'arraybuffer',
@@ -113,14 +117,14 @@ export default (output, url) => {
 
   const elements = {
     img: 'src',
-    // link: 'href',
-    // script: 'src',
+    link: 'href',
+    script: 'src',
   };
 
   return createAssetsFolder(assetsFolderPath)
     .then(() => getHtmlFile(targetUrl))
-    .then((html) => getImgSources(html, targetUrl, assetsFolderName, filePath, elements))
-    .then((list) => downloadImages(list, assetsFolderPath))
+    .then((html) => getSources(html, targetUrl, assetsFolderName, filePath, elements))
+    .then((list) => downloadElements(list, assetsFolderPath))
     .then(() => pathToProject)
     .catch(console.error);
 };
