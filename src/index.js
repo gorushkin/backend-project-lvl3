@@ -72,6 +72,8 @@ const IsElementSourceLocal = (src, url) => {
   return true;
 };
 
+const isTagCanonical = (tag) => tag === 'canonical';
+
 const isElementSourceCorrect = (elementSource, url) => elementSource
   && IsElementSourceLocal(elementSource, url)
   && elementSource !== url.href;
@@ -86,11 +88,8 @@ const getSources = (html, url, assetsFolderName, filePath, list) => {
       const elementSource = html(elem).attr(tagHref);
       const source = getSource(elementSource, url);
       const name = getElementName(source);
-      if (elem.attribs.rel === 'canonical') {
-        html(elem).attr(tagHref, getPath(assetsFolderName, `${name}.html`));
-      } else {
-        html(elem).attr(tagHref, getPath(assetsFolderName, name));
-      }
+      const htmlElementHref = isTagCanonical(elem.attribs.rel) ? `${name}.html` : name;
+      html(elem).attr(tagHref, getPath(assetsFolderName, htmlElementHref));
       return { name, source };
     });
     return [...acc, ...imgSources];
