@@ -29,7 +29,7 @@ const isElementSourceGlobal = (src, url) => {
 };
 
 const getImgSources = (html, url, assetsFolderName, filePath) => {
-  const imgSources = html('img').map((i, elem) => {
+  const imgSources = html('img').toArray().map((elem) => {
     const elementSource = html(elem).attr('src');
     if (isElementSourceGlobal(elementSource, url)) {
       return false;
@@ -40,7 +40,7 @@ const getImgSources = (html, url, assetsFolderName, filePath) => {
     const name = `${namePrefix}-${sourceFileName}`;
     html(elem).attr('src', getPath(assetsFolderName, name));
     return { name, source };
-  }).get();
+  });
   return fs.promises.writeFile(filePath, html.html(), 'utf-8').then(() => imgSources);
 };
 
