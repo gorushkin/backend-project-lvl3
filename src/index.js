@@ -65,16 +65,19 @@ const isElementSourceCorrect = (elementSource, url) => elementSource
 const getSources = (html, url, assetsFolderName, filePath, list) => {
   const sources = Object.keys(list).reduce((acc, tagName) => {
     const tagHref = list[tagName];
-    const imgSources = html(tagName).toArray().filter((elem) => {
-      const elementSource = html(elem).attr(tagHref);
-      return isElementSourceCorrect(elementSource, url);
-    }).map((elem) => {
-      const elementSource = html(elem).attr(tagHref);
-      const source = getSource(elementSource, url);
-      const name = isTagCanonical(elem.attribs.rel) ? `${getElementName(source)}.html` : getElementName(source);
-      html(elem).attr(tagHref, getPath(assetsFolderName, name));
-      return { name, source };
-    });
+    const imgSources = html(tagName)
+      .toArray()
+      .filter((elem) => {
+        const elementSource = html(elem).attr(tagHref);
+        return isElementSourceCorrect(elementSource, url);
+      })
+      .map((elem) => {
+        const elementSource = html(elem).attr(tagHref);
+        const source = getSource(elementSource, url);
+        const name = isTagCanonical(elem.attribs.rel) ? `${getElementName(source)}.html` : getElementName(source);
+        html(elem).attr(tagHref, getPath(assetsFolderName, name));
+        return { name, source };
+      });
     return [...acc, ...imgSources];
   }, []);
   return fs.promises.writeFile(filePath, html.html(), 'utf-8').then(() => sources);
