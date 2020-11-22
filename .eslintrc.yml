@@ -2,18 +2,22 @@
 ---
 
 plugins:
-  - babel
   - import
   - jest
 
 env:
   node: true
   jest: true
+  es2020: true
 
-parser: babel-eslint
+parserOptions:
+  ecmaVersion: 11
+  sourceType: module
 
 extends:
   - 'airbnb-base'
 
 rules:
   no-console: 0
+  no-underscore-dangle:  ["error", { "allow": ["__filename", "__dirname"] }]
+  import/extensions: off
