@@ -2,8 +2,9 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import cheerio from 'cheerio';
-import iconv from 'iconv-lite';
-import jschardet from 'jschardet';
+import getEncodedText from './getEncodedHtml.js';
+
+const isTagCanonical = (tag) => tag === 'canonical';
 
 const updateName = (url) => {
   const { host, pathname } = new URL(url);
@@ -18,28 +19,13 @@ const createAssetsFolder = (assetsFolderPath) => fs
     throw new Error('There is no such directory');
   });
 
-const getSourceEncoding = ({ encoding }) => {
-  switch (encoding) {
-    case 'windows-1251': {
-      return 'win1251';
-    }
-    case 'windows-1252': {
-      return 'win1252';
-    }
-    default: {
-      return 'UTF-8';
-    }
-  }
-};
-
 const getHtmlFile = (targetUrl) => axios
   .get(targetUrl.href, {
     responseType: 'arraybuffer',
     reponseEncoding: 'binary',
   })
   .then((response) => {
-    const charsetMatch = getSourceEncoding(jschardet.detect(response.data));
-    const correcttext = iconv.decode(response.data, charsetMatch);
+    const correcttext = getEncodedText(response.data);
     return cheerio.load(correcttext, { decodeEntities: false });
   });
 
@@ -72,8 +58,6 @@ const IsElementSourceLocal = (src, url) => {
   return true;
 };
 
-const isTagCanonical = (tag) => tag === 'canonical';
-
 const isElementSourceCorrect = (elementSource, url) => elementSource
   && IsElementSourceLocal(elementSource, url)
   && elementSource !== url.href;
@@ -87,9 +71,8 @@ const getSources = (html, url, assetsFolderName, filePath, list) => {
     }).map((elem) => {
       const elementSource = html(elem).attr(tagHref);
       const source = getSource(elementSource, url);
-      const name = getElementName(source);
-      const htmlElementHref = isTagCanonical(elem.attribs.rel) ? `${name}.html` : name;
-      html(elem).attr(tagHref, getPath(assetsFolderName, htmlElementHref));
+      const name = isTagCanonical(elem.attribs.rel) ? `${getElementName(source)}.html` : getElementName(source);
+      html(elem).attr(tagHref, getPath(assetsFolderName, name));
       return { name, source };
     });
     return [...acc, ...imgSources];
@@ -102,11 +85,10 @@ const downloadElements = (list, folderPath) => {
     .get(source, {
       responseType: 'arraybuffer',
     })
-    .catch((err) => console.log(source, err.message))
     .then((response) => {
       const imgPath = getPath(folderPath, name);
       return fs.promises.writeFile(imgPath, response.data, 'utf-8');
-    }).catch((err) => console.log(err.message)));
+    }));
   return Promise.all(promises);
 };
 
