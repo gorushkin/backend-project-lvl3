@@ -36,9 +36,9 @@ let tempDir;
 let expectedFiles;
 
 const tests = [
-  [outputImgNames, 'expectedImg'],
-  [outputCssNames, 'expectedCss'],
-  [outputJsNames, 'expectedJs'],
+  ['test get/write img', outputImgNames, 'expectedImg'],
+  ['test get/write css', outputCssNames, 'expectedCss'],
+  ['test get/write js', outputJsNames, 'expectedJs'],
 ];
 
 beforeAll(async () => {
@@ -79,7 +79,7 @@ test('test get/write html', async () => {
   );
 });
 
-test.each(tests)('description', async (outputFilenames, expectedFile) => {
+test.each(tests)('%s,', async (_, outputFilenames, expectedFile) => {
   const dir = await pageLoader(tempDir, url);
   const outputFilePaths = outputFilenames.map((filename) => path
     .join(dir, `${projectName}_files`, filename));
