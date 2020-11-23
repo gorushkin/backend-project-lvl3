@@ -35,58 +35,60 @@ nock.disableNetConnect();
 let tempDir;
 let expectedFiles;
 
-const tests = [
-  ['test get/write img', outputImgNames, 'expectedImg'],
-  ['test get/write css', outputCssNames, 'expectedCss'],
-  ['test get/write js', outputJsNames, 'expectedJs'],
-];
+describe('test sources dounloading', () => {
+  const tests = [
+    ['test get/write img', outputImgNames, 'expectedImg'],
+    ['test get/write css', outputCssNames, 'expectedCss'],
+    ['test get/write js', outputJsNames, 'expectedJs'],
+  ];
 
-beforeAll(async () => {
-  expectedFiles = {
-    expectedHtml: await fs.promises.readFile(getFilePath(inputFilename), 'utf-8'),
-    expectedImg: await fs.promises.readFile(getFilePath(inputImgName)),
-    expectedCss: await fs.promises.readFile(getFilePath(inputCssName)),
-    expectedJs: await fs.promises.readFile(getFilePath(inputJsName)),
-  };
-});
+  beforeAll(async () => {
+    expectedFiles = {
+      expectedHtml: await fs.promises.readFile(getFilePath(inputFilename), 'utf-8'),
+      expectedImg: await fs.promises.readFile(getFilePath(inputImgName)),
+      expectedCss: await fs.promises.readFile(getFilePath(inputCssName)),
+      expectedJs: await fs.promises.readFile(getFilePath(inputJsName)),
+    };
+  });
 
-beforeEach(async () => {
-  tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
+  beforeEach(async () => {
+    tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
 
-  nock('https://ru.hexlet.io')
-    .get('/courses').reply(200, expectedFiles.expectedHtml);
-  nock('https://ru.hexlet.io')
-    .get('/assets/professions/img01.jpg')
-    .reply(200, expectedFiles.expectedImg);
-  nock('https://ru.hexlet.io')
-    .get('/assets/professions/img02.jpg')
-    .reply(200, expectedFiles.expectedImg);
-  nock('https://ru.hexlet.io')
-    .get('/assets/application.css').reply(200, expectedFiles.expectedCss);
-  nock('https://ru.hexlet.io')
-    .get('/courses').reply(200, '');
-  nock('https://ru.hexlet.io')
-    .get('/packs/js/runtime.js').reply(200, expectedFiles.expectedJs);
-});
+    nock('https://ru.hexlet.io')
+      .get('/courses').reply(200, expectedFiles.expectedHtml);
+    nock('https://ru.hexlet.io')
+      .get('/assets/professions/img01.jpg')
+      .reply(200, expectedFiles.expectedImg);
+    nock('https://ru.hexlet.io')
+      .get('/assets/professions/img02.jpg')
+      .reply(200, expectedFiles.expectedImg);
+    nock('https://ru.hexlet.io')
+      .get('/assets/application.css').reply(200, expectedFiles.expectedCss);
+    nock('https://ru.hexlet.io')
+      .get('/courses').reply(200, '');
+    nock('https://ru.hexlet.io')
+      .get('/packs/js/runtime.js').reply(200, expectedFiles.expectedJs);
+  });
 
-test('test get/write html', async () => {
-  const expectedHtml = await fs.promises.readFile(getFilePath(outputHtmlfilename), 'utf-8');
+  test('test get/write html', async () => {
+    const expectedHtml = await fs.promises.readFile(getFilePath(outputHtmlfilename), 'utf-8');
 
-  const dir = await pageLoader(tempDir, url);
-  const resultHtml = await fs.promises.readFile(path.join(dir, `${projectName}.html`), 'utf-8');
-  expect(prettier.format(resultHtml, { parser: 'html' })).toEqual(
-    prettier.format(expectedHtml, { parser: 'html' }),
-  );
-});
+    const dir = await pageLoader(tempDir, url);
+    const resultHtml = await fs.promises.readFile(path.join(dir, `${projectName}.html`), 'utf-8');
+    expect(prettier.format(resultHtml, { parser: 'html' })).toEqual(
+      prettier.format(expectedHtml, { parser: 'html' }),
+    );
+  });
 
-test.each(tests)('%s,', async (_, outputFilenames, expectedFile) => {
-  const dir = await pageLoader(tempDir, url);
-  const outputFilePaths = outputFilenames.map((filename) => path
-    .join(dir, `${projectName}_files`, filename));
-  const results = await Promise.all(
-    outputFilePaths.map(async (filePath) => fs.promises.readFile(filePath)),
-  );
-  results.forEach((file) => {
-    expect(expectedFiles[expectedFile]).toEqual(file);
+  test.each(tests)('%s,', async (_, outputFilenames, expectedFile) => {
+    const dir = await pageLoader(tempDir, url);
+    const outputFilePaths = outputFilenames.map((filename) => path
+      .join(dir, `${projectName}_files`, filename));
+    const results = await Promise.all(
+      outputFilePaths.map(async (filePath) => fs.promises.readFile(filePath)),
+    );
+    results.forEach((file) => {
+      expect(expectedFiles[expectedFile]).toEqual(file);
+    });
   });
 });

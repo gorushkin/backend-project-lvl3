@@ -2,7 +2,6 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import cheerio from 'cheerio';
-import getEncodedText from './getEncodedHtml.js';
 
 const isTagCanonical = (tag) => tag === 'canonical';
 
@@ -20,14 +19,8 @@ const createAssetsFolder = (assetsFolderPath) => fs
   });
 
 const getHtmlFile = (targetUrl) => axios
-  .get(targetUrl.href, {
-    responseType: 'arraybuffer',
-    reponseEncoding: 'binary',
-  })
-  .then((response) => {
-    const correcttext = getEncodedText(response.data);
-    return cheerio.load(correcttext, { decodeEntities: false });
-  });
+  .get(targetUrl.href)
+  .then((response) => cheerio.load(response.data, { decodeEntities: false }));
 
 const getElementName = (source) => {
   const namePrefix = updateName(path.dirname(source));
@@ -48,7 +41,7 @@ const getSource = (elementSource, url) => {
   return (new URL(path.join(prefix, src), url.origin)).href;
 };
 
-const IsElementSourceLocal = (src, url) => {
+const isElementSourceLocal = (src, url) => {
   if (src.substring(0, 2) === '//') {
     return true;
   }
@@ -59,7 +52,7 @@ const IsElementSourceLocal = (src, url) => {
 };
 
 const isElementSourceCorrect = (elementSource, url) => elementSource
-  && IsElementSourceLocal(elementSource, url)
+  && isElementSourceLocal(elementSource, url)
   && elementSource !== url.href;
 
 const getSources = (html, url, assetsFolderName, filePath, list) => {
