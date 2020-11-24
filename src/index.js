@@ -30,9 +30,8 @@ const getElementName = (source) => {
 
 const isUrlAbsolute = (url) => (/^(?:[a-z]+:)?\/\//i).test(url);
 
-const getSource = (elementSource, { origin, href }) => {
-  if (elementSource.substring(0, 2) === '//') return (new URL(elementSource, origin)).href;
-  if (isUrlAbsolute(elementSource)) return elementSource;
+const getSource = (elementSource, { href }) => {
+  if (isUrlAbsolute(elementSource)) return (new URL(elementSource, href)).href;
   return (new URL(path.join(href, elementSource))).href;
 };
 
@@ -60,7 +59,6 @@ const getSources = (html, url, assetsFolderName) => {
         const tagType = html(elem).attr('rel') === 'canonical' ? 'hyperlink' : 'usual';
         const elementSource = html(elem).attr(tagHref);
         const source = getSource(elementSource, url);
-        // console.log('source: ', source);
         const name = mapping[tagType](getElementName(source));
         html(elem).attr(tagHref, getPath(assetsFolderName, name));
         return { name, source };
