@@ -22,7 +22,7 @@ const inputImgName = 'img.jpg';
 const inputCssName = 'style.css';
 const inputJsName = 'script.js';
 
-const outputHtmlfilename = 'ru-hexlet-io-courses--output.html';
+const outputHtmlfilename = 'ru-hexlet-io-courses--expected.html';
 const outputImgNames = [
   'ru-hexlet-io-courses-assets-professions-img01.jpg',
   'ru-hexlet-io-assets-professions-img02.jpg',
