@@ -30,12 +30,12 @@ const getElementName = (source) => {
 
 const isUrlAbsolute = (url) => (/^(?:[a-z]+:)?\/\//i).test(url);
 
-const getSource = (elementSource, { href }) => {
-  if (isUrlAbsolute(elementSource)) return (new URL(elementSource, href)).href;
-  return (new URL(path.join(href, elementSource))).href;
+const getSource = (itemSource, { href }) => {
+  if (isUrlAbsolute(itemSource)) return (new URL(itemSource, href)).href;
+  return (new URL(path.join(href, itemSource))).href;
 };
 
-const isElementSourceLocal = (src, { href, origin }) => (new URL(src, href)).origin === origin;
+const isSourceLocal = (src, { href, origin }) => (new URL(src, href)).origin === origin;
 
 const createAssetsFolder = (assetsFolderPath) => fs
   .promises.mkdir(assetsFolderPath, { recursive: true }).catch(() => {
@@ -47,23 +47,23 @@ const getHtmlFile = (targetUrl) => axios
   .then((response) => cheerio.load(response.data, { decodeEntities: false }));
 
 const getSources = (html, url, assetsFolderName) => {
-  const sources = Object.keys(elements).reduce((acc, tagName) => {
-    const tagHref = elements[tagName];
-    const tagSources = html(tagName)
+  const sources = Object.keys(elements).reduce((acc, itemName) => {
+    const itemSrcAttribute = elements[itemName];
+    const itemSources = html(itemName)
       .toArray()
       .filter((elem) => {
-        const elementSource = (new URL(html(elem).attr(tagHref), url)).href;
-        return isElementSourceLocal(elementSource, url);
+        const itemSource = (new URL(html(elem).attr(itemSrcAttribute), url)).href;
+        return isSourceLocal(itemSource, url);
       })
       .map((elem) => {
-        const tagType = html(elem).attr('rel') === 'canonical' ? 'hyperlink' : 'usual';
-        const elementSource = html(elem).attr(tagHref);
-        const source = getSource(elementSource, url);
-        const name = mapping[tagType](getElementName(source));
-        html(elem).attr(tagHref, getPath(assetsFolderName, name));
+        const itemType = html(elem).attr('rel') === 'canonical' ? 'hyperlink' : 'usual';
+        const itemSource = html(elem).attr(itemSrcAttribute);
+        const source = getSource(itemSource, url);
+        const name = mapping[itemType](getElementName(source));
+        html(elem).attr(itemSrcAttribute, getPath(assetsFolderName, name));
         return { name, source };
       });
-    return [...acc, ...tagSources];
+    return [...acc, ...itemSources];
   }, []);
   return [html, sources];
 };
@@ -74,8 +74,8 @@ const downloadElements = (html, sources, folderPath, filePath) => {
       responseType: 'arraybuffer',
     })
     .then((response) => {
-      const imgPath = getPath(folderPath, name);
-      return fs.promises.writeFile(imgPath, response.data, 'utf-8').catch(console.error);
+      const itemPath = getPath(folderPath, name);
+      return fs.promises.writeFile(itemPath, response.data, 'utf-8').catch(console.error);
     }));
   return fs.promises.writeFile(filePath, html.html(), 'utf-8').then(() => Promise.all(promises));
 };
