@@ -35,8 +35,6 @@ const getSource = (itemSource, { href }) => {
   return (new URL(path.join(href, itemSource))).href;
 };
 
-const isSourceLocal = (src, { href, origin }) => (new URL(src, href)).origin === origin;
-
 const createAssetsFolder = (assetsFolderPath) => fs
   .promises.mkdir(assetsFolderPath, { recursive: true }).catch(() => {
     throw new Error('There is no such directory');
@@ -47,20 +45,20 @@ const getHtmlFile = (targetUrl) => axios
   .then((response) => cheerio.load(response.data, { decodeEntities: false }));
 
 const getSources = (html, url, assetsFolderName) => {
-  const sources = Object.keys(elements).reduce((acc, itemName) => {
-    const itemSrcAttribute = elements[itemName];
+  const sources = Object.entries(elements).reduce((acc, [itemName, itemSrcAttribute]) => {
     const itemSources = html(itemName)
       .toArray()
-      .filter((elem) => {
-        const itemSource = (new URL(html(elem).attr(itemSrcAttribute), url)).href;
-        return isSourceLocal(itemSource, url);
-      })
-      .map((elem) => {
-        const itemType = html(elem).attr('rel') === 'canonical' ? 'hyperlink' : 'usual';
-        const itemSource = html(elem).attr(itemSrcAttribute);
-        const source = getSource(itemSource, url);
+      .map((item) => ({
+        ...item,
+        src: (new URL(html(item).attr(itemSrcAttribute), url)),
+        rel: html(item).attr('rel'),
+      }))
+      .filter(({ src }) => src.origin === url.origin)
+      .map((item) => {
+        const itemType = item.rel === 'canonical' ? 'hyperlink' : 'usual';
+        const source = getSource(item.src, url);
         const name = mapping[itemType](getElementName(source));
-        html(elem).attr(itemSrcAttribute, getPath(assetsFolderName, name));
+        html(item).attr(itemSrcAttribute, getPath(assetsFolderName, name));
         return { name, source };
       });
     return [...acc, ...itemSources];
