@@ -24,10 +24,10 @@ const inputJsName = 'script.js';
 
 const outputHtmlfilename = 'ru-hexlet-io-courses--output.html';
 const outputImgNames = [
-  'ru-hexlet-io-assets-professions-img01.jpg',
+  'ru-hexlet-io-courses-assets-professions-img01.jpg',
   'ru-hexlet-io-assets-professions-img02.jpg',
 ];
-const outputCssNames = ['ru-hexlet-io-assets-application.css'];
+const outputCssNames = ['ru-hexlet-io-courses-assets-application.css'];
 const outputJsNames = ['ru-hexlet-io-packs-js-runtime.js'];
 
 nock.disableNetConnect();
@@ -56,16 +56,16 @@ describe('test sources dounloading', () => {
 
     nock('https://ru.hexlet.io')
       .get('/courses').reply(200, expectedFiles.expectedHtml);
-    nock('https://ru.hexlet.io')
+    nock('https://ru.hexlet.io/courses')
       .get('/assets/professions/img01.jpg')
       .reply(200, expectedFiles.expectedImg);
-    nock('https://ru.hexlet.io')
+    nock('https://ru.hexlet.io/')
       .get('/assets/professions/img02.jpg')
       .reply(200, expectedFiles.expectedImg);
     nock('https://ru.hexlet.io')
-      .get('/assets/application.css').reply(200, expectedFiles.expectedCss);
-    nock('https://ru.hexlet.io')
-      .get('/courses').reply(200, '');
+      .get('/courses/assets/application.css').reply(200, expectedFiles.expectedCss);
+    nock('https://ru.hexlet.io/')
+      .get('/courses/courses').reply(200, '');
     nock('https://ru.hexlet.io')
       .get('/packs/js/runtime.js').reply(200, expectedFiles.expectedJs);
   });
