@@ -3,7 +3,16 @@ import fs from 'fs';
 import path from 'path';
 import cheerio from 'cheerio';
 
-const isTagCanonical = (tag) => tag === 'canonical';
+const mapping = {
+  hyperlink: (name) => (path.extname(name) ? name : `${name}.html`),
+  usual: (name) => name,
+};
+
+const elements = {
+  img: 'src',
+  link: 'href',
+  script: 'src',
+};
 
 const updateName = (url) => {
   const { host, pathname } = new URL(url);
@@ -12,6 +21,22 @@ const updateName = (url) => {
 };
 
 const getPath = (arg1, arg2) => path.join(arg1, arg2);
+
+const getElementName = (source) => {
+  const namePrefix = updateName(path.dirname(source));
+  const sourceFileName = path.posix.basename(source);
+  return `${namePrefix}-${sourceFileName}`;
+};
+
+const isUrlAbsolute = (url) => (/^(?:[a-z]+:)?\/\//i).test(url);
+
+const getSource = (elementSource, { origin, href }) => {
+  if (elementSource.substring(0, 2) === '//') return (new URL(elementSource, origin)).href;
+  if (isUrlAbsolute(elementSource)) return elementSource;
+  return (new URL(path.join(href, elementSource))).href;
+};
+
+const isElementSourceLocal = (src, { href, origin }) => (new URL(src, href)).origin === origin;
 
 const createAssetsFolder = (assetsFolderPath) => fs
   .promises.mkdir(assetsFolderPath, { recursive: true }).catch(() => {
@@ -22,61 +47,39 @@ const getHtmlFile = (targetUrl) => axios
   .get(targetUrl.href)
   .then((response) => cheerio.load(response.data, { decodeEntities: false }));
 
-const getElementName = (source) => {
-  const namePrefix = updateName(path.dirname(source));
-  const sourceFileName = path.posix.basename(source);
-  return `${namePrefix}-${sourceFileName}`;
-};
-
-const isUrlAbsolute = (url) => (/^(?:[a-z]+:)?\/\//i).test(url);
-
-const getSource = (elementSource, { origin, pathname }) => {
-  if (elementSource.substring(0, 2) === '//') return (new URL(elementSource, origin)).href;
-  if (isUrlAbsolute(elementSource)) return elementSource;
-  const currentImgPath = pathname.split('/').filter((item) => item.length > 1);
-  const stepUp = elementSource.split('../').length - 1;
-  const src = elementSource.replace(/\..\//g, '');
-  const prefix = currentImgPath.splice(0, stepUp).join('/');
-  return (new URL(path.join(prefix, src), origin)).href;
-};
-
-const isElementSourceLocal = (src, { href, origin }) => (new URL(src, href)).origin === origin;
-
-const isElementSourceCorrect = (elementSource, url) => elementSource
-  && isElementSourceLocal(elementSource, url)
-  && elementSource !== url.href;
-
-const getSources = (html, url, assetsFolderName, filePath, list) => {
-  const sources = Object.keys(list).reduce((acc, tagName) => {
-    const tagHref = list[tagName];
-    const imgSources = html(tagName)
+const getSources = (html, url, assetsFolderName) => {
+  const sources = Object.keys(elements).reduce((acc, tagName) => {
+    const tagHref = elements[tagName];
+    const tagSources = html(tagName)
       .toArray()
       .filter((elem) => {
-        const elementSource = html(elem).attr(tagHref);
-        return isElementSourceCorrect(elementSource, url);
+        const elementSource = (new URL(html(elem).attr(tagHref), url)).href;
+        return isElementSourceLocal(elementSource, url);
       })
       .map((elem) => {
+        const tagType = html(elem).attr('rel') === 'canonical' ? 'hyperlink' : 'usual';
         const elementSource = html(elem).attr(tagHref);
         const source = getSource(elementSource, url);
-        const name = isTagCanonical(elem.attribs.rel) ? `${getElementName(source)}.html` : getElementName(source);
+        // console.log('source: ', source);
+        const name = mapping[tagType](getElementName(source));
         html(elem).attr(tagHref, getPath(assetsFolderName, name));
         return { name, source };
       });
-    return [...acc, ...imgSources];
+    return [...acc, ...tagSources];
   }, []);
-  return fs.promises.writeFile(filePath, html.html(), 'utf-8').then(() => sources);
+  return [html, sources];
 };
 
-const downloadElements = (list, folderPath) => {
-  const promises = list.map(({ name, source }) => axios
+const downloadElements = (html, sources, folderPath, filePath) => {
+  const promises = sources.map(({ name, source }) => axios
     .get(source, {
       responseType: 'arraybuffer',
     })
     .then((response) => {
       const imgPath = getPath(folderPath, name);
-      return fs.promises.writeFile(imgPath, response.data, 'utf-8');
+      return fs.promises.writeFile(imgPath, response.data, 'utf-8').catch(console.error);
     }));
-  return Promise.all(promises);
+  return fs.promises.writeFile(filePath, html.html(), 'utf-8').then(() => Promise.all(promises));
 };
 
 export default (output, url) => {
@@ -87,16 +90,10 @@ export default (output, url) => {
   const assetsFolderName = `${projectName}_files`;
   const assetsFolderPath = getPath(pathToProject, assetsFolderName);
 
-  const elements = {
-    img: 'src',
-    link: 'href',
-    script: 'src',
-  };
-
   return createAssetsFolder(assetsFolderPath)
     .then(() => getHtmlFile(targetUrl))
-    .then((html) => getSources(html, targetUrl, assetsFolderName, filePath, elements))
-    .then((list) => downloadElements(list, assetsFolderPath))
+    .then((html) => getSources(html, targetUrl, assetsFolderName))
+    .then(([html, sources]) => downloadElements(html, sources, assetsFolderPath, filePath))
     .then(() => pathToProject)
     .catch(console.error);
 };
