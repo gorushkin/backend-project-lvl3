@@ -7,9 +7,6 @@ build:
 test:
 	npm test
 
-bin:
-	node src/bin/page-loader.js --output temp https://mobile-review.com
-
 test-coverage:
 	npm test -- --coverage
 
