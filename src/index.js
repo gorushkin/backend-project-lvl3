@@ -30,26 +30,17 @@ const getElementName = (source) => {
 
 const isUrlAbsolute = (url) => (/^(?:[a-z]+:)?\/\//i).test(url);
 
-const getSource = (elementSource, url) => {
-  if (elementSource.substring(0, 2) === '//') return (new URL(elementSource, url.origin)).href;
+const getSource = (elementSource, { origin, pathname }) => {
+  if (elementSource.substring(0, 2) === '//') return (new URL(elementSource, origin)).href;
   if (isUrlAbsolute(elementSource)) return elementSource;
-  const { pathname } = url;
   const currentImgPath = pathname.split('/').filter((item) => item.length > 1);
   const stepUp = elementSource.split('../').length - 1;
   const src = elementSource.replace(/\..\//g, '');
   const prefix = currentImgPath.splice(0, stepUp).join('/');
-  return (new URL(path.join(prefix, src), url.origin)).href;
+  return (new URL(path.join(prefix, src), origin)).href;
 };
 
-const isElementSourceLocal = (src, url) => {
-  if (src.substring(0, 2) === '//') {
-    return true;
-  }
-  if (isUrlAbsolute(src)) {
-    return new URL(src).origin === url.origin;
-  }
-  return true;
-};
+const isElementSourceLocal = (src, { href, origin }) => (new URL(src, href)).origin === origin;
 
 const isElementSourceCorrect = (elementSource, url) => elementSource
   && isElementSourceLocal(elementSource, url)
