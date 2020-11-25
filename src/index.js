@@ -16,8 +16,7 @@ const elements = {
 
 const updateName = (url) => {
   const { host, pathname } = new URL(url);
-  const name = pathname.length > 1 ? `${host}${pathname}` : host;
-  return name.replace(/https?:\/\//i, '').replace(/[^A-Za-z0-9]/g, '-');
+  return (`${host}${pathname}`).replace(/[^A-Za-z0-9]/g, '-').replace(/-$/i, '');
 };
 
 const getPath = (arg1, arg2) => path.join(arg1, arg2);
@@ -30,11 +29,6 @@ const getElementName = (source) => {
 
 const isUrlAbsolute = (url) => (/^(?:[a-z]+:)?\/\//i).test(url);
 
-const getSource = (itemSource, { href }) => {
-  if (isUrlAbsolute(itemSource)) return (new URL(itemSource, href)).href;
-  return (new URL(path.join(href, itemSource))).href;
-};
-
 const createAssetsFolder = (assetsFolderPath) => fs
   .promises.mkdir(assetsFolderPath, { recursive: true }).catch(() => {
     throw new Error('There is no such directory');
@@ -44,25 +38,33 @@ const getHtmlFile = (targetUrl) => axios
   .get(targetUrl.href)
   .then((response) => cheerio.load(response.data, { decodeEntities: false }));
 
+const getUrl = (str, url) => {
+  const newStr = isUrlAbsolute(str) ? str : str.replace(/^\//i, '');
+  return (new URL(newStr, url));
+};
+
 const getSources = (html, url, assetsFolderName) => {
   const sources = Object.entries(elements).reduce((acc, [itemName, itemSrcAttribute]) => {
     const itemSources = html(itemName)
       .toArray()
       .map((item) => ({
         ...item,
-        src: (new URL(html(item).attr(itemSrcAttribute), url)),
+        src: getUrl(html(item).attr(itemSrcAttribute), url.href),
         rel: html(item).attr('rel'),
       }))
       .filter(({ src }) => src.origin === url.origin)
       .map((item) => {
         const itemType = item.rel === 'canonical' ? 'hyperlink' : 'usual';
-        const source = getSource(item.src, url);
+        const source = item.src.href;
         const name = mapping[itemType](getElementName(source));
         html(item).attr(itemSrcAttribute, getPath(assetsFolderName, name));
-        return { name, source };
+        return {
+          name, source,
+        };
       });
     return [...acc, ...itemSources];
   }, []);
+
   return [html, sources];
 };
 
