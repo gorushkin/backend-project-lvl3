@@ -3,11 +3,6 @@ import fs from 'fs';
 import path from 'path';
 import cheerio from 'cheerio';
 
-const mapping = {
-  hyperlink: (name) => (path.extname(name) ? name : `${name}.html`),
-  usual: (name) => name,
-};
-
 const elements = {
   img: 'src',
   link: 'href',
@@ -36,9 +31,11 @@ const getHtmlFile = (targetUrl) => axios
   .get(targetUrl.href)
   .then((response) => cheerio.load(response.data, { decodeEntities: false }));
 
+const isLinkHasExtension = (link) => !!path.extname(link);
+
 const getSource = (str, url) => {
-  const changedStr = isUrlAbsolute(str) ? str : str.replace(/^\//i, '');
-  return (new URL(changedStr, url));
+  const result = isUrlAbsolute(str) ? str : str.replace(/^\//i, '');
+  return (new URL(result, url));
 };
 
 const getSources = (html, url, assetsFolderName) => {
@@ -47,10 +44,9 @@ const getSources = (html, url, assetsFolderName) => {
       .toArray()
       .map((item) => {
         const src = getSource(html(item).attr(itemSrcAttribute), url.href);
-        const itemType = html(item).attr('rel') === 'canonical' ? 'hyperlink' : 'usual';
-        const name = mapping[itemType](getElementName(src.href));
+        const name = isLinkHasExtension(src.href) ? (getElementName(src.href)) : `${(getElementName(src.href))}.html`;
         return {
-          ...item, src, itemType, name,
+          ...item, src, name,
         };
       })
       .filter(({ src }) => src.origin === url.origin)
