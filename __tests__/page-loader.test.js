@@ -9,48 +9,57 @@ import { fileURLToPath } from 'url';
 
 import pageLoader from '../src';
 
+nock.disableNetConnect();
 axios.defaults.adapter = adapter;
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
 const getFilePath = (fileName) => path.join(__dirname, '..', '/__fixtures__/', fileName);
 
 const url = 'https://ru.hexlet.io/courses/';
 const projectName = 'ru-hexlet-io-courses';
-const inputFilename = 'ru-hexlet-io-courses--input.html';
-const inputImgName = 'img.jpg';
-const inputCssName = 'style.css';
-const inputJsName = 'script.js';
 
-const outputHtmlfilename = 'ru-hexlet-io-courses--expected.html';
-const outputImgNames = [
-  'ru-hexlet-io-courses-assets-professions-img01.jpg',
-  'ru-hexlet-io-assets-professions-img02.jpg',
-];
-const outputCssNames = [
-  'ru-hexlet-io-courses-assets-application.css',
-  'ru-hexlet-io-css-main.css',
-];
-const outputJsNames = ['ru-hexlet-io-packs-js-runtime.js'];
-
-nock.disableNetConnect();
+const testData = {
+  html: {
+    inputFilename: 'ru-hexlet-io-courses--input.html',
+    outputFilenames: 'ru-hexlet-io-courses--expected.html',
+  },
+  img: {
+    inputFilename: 'img.jpg',
+    outputFilenames: [
+      'ru-hexlet-io-courses-assets-professions-img01.jpg',
+      'ru-hexlet-io-assets-professions-img02.jpg',
+    ],
+  },
+  css: {
+    inputFilename: 'style.css',
+    outputFilenames: [
+      'ru-hexlet-io-courses-assets-application.css',
+      'ru-hexlet-io-css-main.css',
+    ],
+  },
+  js: {
+    inputFilename: 'script.js',
+    outputFilenames: ['ru-hexlet-io-packs-js-runtime.js'],
+  },
+};
 
 let tempDir;
 let expectedFiles;
 
 describe('test sources dounloading', () => {
   const tests = [
-    ['test get/write img', outputImgNames, 'expectedImg'],
-    ['test get/write css', outputCssNames, 'expectedCss'],
-    ['test get/write js', outputJsNames, 'expectedJs'],
+    ['test get/write img', testData.img.outputFilenames, 'expectedImg'],
+    ['test get/write css', testData.css.outputFilenames, 'expectedCss'],
+    ['test get/write js', testData.js.outputFilenames, 'expectedJs'],
   ];
 
   beforeAll(async () => {
     expectedFiles = {
-      expectedHtml: await fs.promises.readFile(getFilePath(inputFilename), 'utf-8'),
-      expectedImg: await fs.promises.readFile(getFilePath(inputImgName)),
-      expectedCss: await fs.promises.readFile(getFilePath(inputCssName)),
-      expectedJs: await fs.promises.readFile(getFilePath(inputJsName)),
+      expectedHtml: await fs.promises.readFile(getFilePath(testData.html.inputFilename), 'utf-8'),
+      expectedImg: await fs.promises.readFile(getFilePath(testData.img.inputFilename)),
+      expectedCss: await fs.promises.readFile(getFilePath(testData.css.inputFilename)),
+      expectedJs: await fs.promises.readFile(getFilePath(testData.js.inputFilename)),
     };
   });
 
@@ -76,7 +85,7 @@ describe('test sources dounloading', () => {
   });
 
   test('test get/write html', async () => {
-    const expectedHtml = await fs.promises.readFile(getFilePath(outputHtmlfilename), 'utf-8');
+    const expectedHtml = await fs.promises.readFile(getFilePath(testData.html.outputFilenames), 'utf-8');
 
     const dir = await pageLoader(tempDir, url);
     const resultHtml = await fs.promises.readFile(path.join(dir, `${projectName}.html`), 'utf-8');
