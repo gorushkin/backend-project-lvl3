@@ -38,7 +38,7 @@ const getHtmlFile = (targetUrl) => axios
   .get(targetUrl.href)
   .then((response) => cheerio.load(response.data, { decodeEntities: false }));
 
-const getUrl = (str, url) => {
+const getSource = (str, url) => {
   const newStr = isUrlAbsolute(str) ? str : str.replace(/^\//i, '');
   return (new URL(newStr, url));
 };
@@ -47,16 +47,18 @@ const getSources = (html, url, assetsFolderName) => {
   const sources = Object.entries(elements).reduce((acc, [itemName, itemSrcAttribute]) => {
     const itemSources = html(itemName)
       .toArray()
-      .map((item) => ({
-        ...item,
-        src: getUrl(html(item).attr(itemSrcAttribute), url.href),
-        rel: html(item).attr('rel'),
-      }))
+      .map((item) => {
+        const src = getSource(html(item).attr(itemSrcAttribute), url.href);
+        const itemType = html(item).attr('rel') === 'canonical' ? 'hyperlink' : 'usual';
+        const name = mapping[itemType](getElementName(src.href));
+        return {
+          ...item, src, itemType, name,
+        };
+      })
       .filter(({ src }) => src.origin === url.origin)
       .map((item) => {
-        const itemType = item.rel === 'canonical' ? 'hyperlink' : 'usual';
         const source = item.src.href;
-        const name = mapping[itemType](getElementName(source));
+        const { name } = item;
         html(item).attr(itemSrcAttribute, getPath(assetsFolderName, name));
         return {
           name, source,

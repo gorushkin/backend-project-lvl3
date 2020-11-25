@@ -15,7 +15,7 @@ const __dirname = dirname(__filename);
 
 const getFilePath = (fileName) => path.join(__dirname, '..', '/__fixtures__/', fileName);
 
-const url = 'https://ru.hexlet.io/courses';
+const url = 'https://ru.hexlet.io/courses/';
 const projectName = 'ru-hexlet-io-courses';
 const inputFilename = 'ru-hexlet-io-courses--input.html';
 const inputImgName = 'img.jpg';
@@ -57,21 +57,21 @@ describe('test sources dounloading', () => {
   beforeEach(async () => {
     tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
 
-    nock('https://ru.hexlet.io')
-      .get('/courses').reply(200, expectedFiles.expectedHtml);
+    nock('https://ru.hexlet.io/')
+      .get('/courses/').reply(200, expectedFiles.expectedHtml);
     nock('https://ru.hexlet.io/courses')
       .get('/assets/professions/img01.jpg')
       .reply(200, expectedFiles.expectedImg);
     nock('https://ru.hexlet.io/')
       .get('/assets/professions/img02.jpg')
       .reply(200, expectedFiles.expectedImg);
-    nock('https://ru.hexlet.io')
+    nock('https://ru.hexlet.io/')
       .get('/courses/assets/application.css').reply(200, expectedFiles.expectedCss);
-    nock('https://ru.hexlet.io')
+    nock('https://ru.hexlet.io/')
       .get('/css/main.css').reply(200, expectedFiles.expectedCss);
     nock('https://ru.hexlet.io/')
       .get('/courses/courses').reply(200, '');
-    nock('https://ru.hexlet.io')
+    nock('https://ru.hexlet.io/')
       .get('/packs/js/runtime.js').reply(200, expectedFiles.expectedJs);
   });
 
