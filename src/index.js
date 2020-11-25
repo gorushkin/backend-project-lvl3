@@ -30,17 +30,15 @@ const getElementName = (source) => {
 const isUrlAbsolute = (url) => (/^(?:[a-z]+:)?\/\//i).test(url);
 
 const createAssetsFolder = (assetsFolderPath) => fs
-  .promises.mkdir(assetsFolderPath, { recursive: true }).catch(() => {
-    throw new Error('There is no such directory');
-  });
+  .promises.mkdir(assetsFolderPath, { recursive: true });
 
 const getHtmlFile = (targetUrl) => axios
   .get(targetUrl.href)
   .then((response) => cheerio.load(response.data, { decodeEntities: false }));
 
 const getSource = (str, url) => {
-  const newStr = isUrlAbsolute(str) ? str : str.replace(/^\//i, '');
-  return (new URL(newStr, url));
+  const changedStr = isUrlAbsolute(str) ? str : str.replace(/^\//i, '');
+  return (new URL(changedStr, url));
 };
 
 const getSources = (html, url, assetsFolderName) => {
@@ -82,6 +80,8 @@ const downloadElements = (html, sources, folderPath, filePath) => {
   return fs.promises.writeFile(filePath, html.html(), 'utf-8').then(() => Promise.all(promises));
 };
 
+const isOutputPathExist = (output) => fs.promises.stat(output);
+
 export default (output, url) => {
   const targetUrl = new URL(url);
   const pathToProject = path.resolve(process.cwd(), output);
@@ -90,7 +90,8 @@ export default (output, url) => {
   const assetsFolderName = `${projectName}_files`;
   const assetsFolderPath = getPath(pathToProject, assetsFolderName);
 
-  return createAssetsFolder(assetsFolderPath)
+  return isOutputPathExist(output).catch(() => { throw new Error('There is no such directory'); })
+    .then(() => createAssetsFolder(assetsFolderPath))
     .then(() => getHtmlFile(targetUrl))
     .then((html) => getSources(html, targetUrl, assetsFolderName))
     .then(([html, sources]) => downloadElements(html, sources, assetsFolderPath, filePath))
