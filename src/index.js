@@ -23,37 +23,36 @@ const getElementName = (source) => {
 const isUrlAbsolute = (url) => (/^(?:[a-z]+:)?\/\//i).test(url);
 
 const createAssetsFolder = (assetsFolderPath) => fs
-  .promises.mkdir(assetsFolderPath, { recursive: true }).catch(() => { throw new Error(`There is folder with ${assetsFolderPath} name`); });
+  .promises.mkdir(assetsFolderPath).catch(() => { throw new Error(`There is folder with ${assetsFolderPath} name`); });
 
 const getHtmlFile = (targetUrl) => axios
   .get(targetUrl.href)
   .then((response) => cheerio.load(response.data, { decodeEntities: false }));
-
-const isLinkHasExtension = (link) => !!path.extname(link);
 
 const getSource = (str, url) => {
   const result = isUrlAbsolute(str) ? str : str.replace(/^\//i, '');
   return (new URL(result, url));
 };
 
+const getElementFilename = (href) => {
+  const name = path.extname(href) ? (getElementName(href)) : `${(getElementName(href))}.html`;
+  return name;
+};
+
 const getSources = (html, url, assetsFolderName) => {
   const sources = Object.entries(elements).reduce((acc, [itemName, itemSrcAttribute]) => {
     const itemSources = html(itemName)
       .toArray()
-      .map((item) => {
-        const src = getSource(html(item).attr(itemSrcAttribute), url.href);
-        const name = isLinkHasExtension(src.href) ? (getElementName(src.href)) : `${(getElementName(src.href))}.html`;
-        return {
-          ...item, src, name,
-        };
-      })
+      .map((item) => ({
+        ...item, src: getSource(html(item).attr(itemSrcAttribute), url.href),
+      }))
       .filter(({ src }) => src.origin === url.origin)
       .map((item) => {
         const source = item.src.href;
-        const { name } = item;
-        html(item).attr(itemSrcAttribute, path.join(assetsFolderName, name));
+        const filename = getElementFilename(item.src.href);
+        html(item).attr(itemSrcAttribute, path.join(assetsFolderName, filename));
         return {
-          name, source,
+          filename, source,
         };
       });
     return [...acc, ...itemSources];
@@ -63,12 +62,12 @@ const getSources = (html, url, assetsFolderName) => {
 };
 
 const downloadElements = (html, sources, folderPath, filePath) => {
-  const promises = sources.map(({ name, source }) => axios
+  const promises = sources.map(({ filename, source }) => axios
     .get(source, {
       responseType: 'arraybuffer',
     })
     .then((response) => {
-      const itemPath = path.join(folderPath, name);
+      const itemPath = path.join(folderPath, filename);
       return fs.promises.writeFile(itemPath, response.data, 'utf-8').catch(console.error);
     }));
   return fs.promises.writeFile(filePath, html.html(), 'utf-8').then(() => Promise.all(promises));
