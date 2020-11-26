@@ -15,76 +15,72 @@ axios.defaults.adapter = adapter;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const getFilePath = (fileName) => path.join(__dirname, '..', '/__fixtures__/', fileName);
+const getFile = (name) => fs.readFileSync(getFilePath(name));
 
 const url = 'https://ru.hexlet.io/courses/';
 const projectName = 'ru-hexlet-io-courses';
 
 const testData = {
   html: {
+    testName: 'test get/write html',
     inputFilename: 'ru-hexlet-io-courses--input.html',
     outputFilenames: 'ru-hexlet-io-courses--expected.html',
+    expectedFile: fs.readFileSync(getFilePath('ru-hexlet-io-courses--input.html'), 'utf-8'),
   },
   img: {
+    testName: 'test get/write img',
     inputFilename: 'img.jpg',
     outputFilenames: [
       'ru-hexlet-io-courses-assets-professions-img01.jpg',
       'ru-hexlet-io-assets-professions-img02.jpg',
     ],
+    expectedFile: getFile('img.jpg'),
   },
   css: {
+    testName: 'test get/write css',
     inputFilename: 'style.css',
     outputFilenames: [
       'ru-hexlet-io-courses-assets-application.css',
       'ru-hexlet-io-css-main.css',
     ],
+    expectedFile: getFile('style.css'),
+
   },
   js: {
+    testName: 'test get/write js',
     inputFilename: 'script.js',
     outputFilenames: ['ru-hexlet-io-packs-js-runtime.js'],
+    expectedFile: getFile('script.js'),
   },
 };
 
 let tempDir;
-let expectedFiles;
 
 describe('test sources dounloading', () => {
-  const tests = [
-    ['test get/write img', testData.img.outputFilenames, 'expectedImg'],
-    ['test get/write css', testData.css.outputFilenames, 'expectedCss'],
-    ['test get/write js', testData.js.outputFilenames, 'expectedJs'],
-  ];
-
-  beforeAll(async () => {
-    expectedFiles = {
-      expectedHtml: await fs.promises.readFile(getFilePath(testData.html.inputFilename), 'utf-8'),
-      expectedImg: await fs.promises.readFile(getFilePath(testData.img.inputFilename)),
-      expectedCss: await fs.promises.readFile(getFilePath(testData.css.inputFilename)),
-      expectedJs: await fs.promises.readFile(getFilePath(testData.js.inputFilename)),
-    };
-  });
+  const tests = ['img', 'css', 'js'].map((format) => [testData[format].testName, testData[format].outputFilenames, testData[format].expectedFile]);
 
   beforeEach(async () => {
     tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
 
     nock('https://ru.hexlet.io/')
-      .get('/courses/').reply(200, expectedFiles.expectedHtml);
+      .get('/courses/').reply(200, testData.html.expectedFile);
     nock('https://ru.hexlet.io/courses')
       .get('/assets/professions/img01.jpg')
-      .reply(200, expectedFiles.expectedImg);
+      .reply(200, testData.img.expectedFile);
     nock('https://ru.hexlet.io/')
       .get('/assets/professions/img02.jpg')
-      .reply(200, expectedFiles.expectedImg);
+      .reply(200, testData.img.expectedFile);
     nock('https://ru.hexlet.io/')
-      .get('/courses/assets/application.css').reply(200, expectedFiles.expectedCss);
+      .get('/courses/assets/application.css').reply(200, testData.css.expectedFile);
     nock('https://ru.hexlet.io/')
-      .get('/css/main.css').reply(200, expectedFiles.expectedCss);
+      .get('/css/main.css').reply(200, testData.css.expectedFile);
     nock('https://ru.hexlet.io/')
       .get('/courses/courses').reply(200, '');
     nock('https://ru.hexlet.io/')
-      .get('/packs/js/runtime.js').reply(200, expectedFiles.expectedJs);
+      .get('/packs/js/runtime.js').reply(200, testData.js.expectedFile);
   });
 
-  test('test get/write html', async () => {
+  test(testData.html.testName, async () => {
     const expectedHtml = await fs.promises.readFile(getFilePath(testData.html.outputFilenames), 'utf-8');
 
     const dir = await pageLoader(tempDir, url);
@@ -102,7 +98,7 @@ describe('test sources dounloading', () => {
       outputFilePaths.map(async (filePath) => fs.promises.readFile(filePath)),
     );
     results.forEach((file) => {
-      expect(expectedFiles[expectedFile]).toEqual(file);
+      expect(expectedFile).toEqual(file);
     });
   });
 });
