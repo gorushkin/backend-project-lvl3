@@ -20,19 +20,12 @@ const getElementName = (source) => {
   return `${namePrefix}-${sourceFileName}`;
 };
 
-const isUrlAbsolute = (url) => (/^(?:[a-z]+:)?\/\//i).test(url);
-
 const createAssetsFolder = (assetsFolderPath) => fs
-  .promises.mkdir(assetsFolderPath).catch(() => { throw new Error(`There is folder with ${assetsFolderPath} name`); });
+  .promises.mkdir(assetsFolderPath, { recursive: true }).catch(() => { throw new Error(`There is folder with ${assetsFolderPath} name`); });
 
 const getHtmlFile = (targetUrl) => axios
   .get(targetUrl.href)
   .then((response) => cheerio.load(response.data, { decodeEntities: false }));
-
-const getSource = (str, url) => {
-  const result = isUrlAbsolute(str) ? str : str.replace(/^\//i, '');
-  return (new URL(result, url));
-};
 
 const getElementFilename = (href) => {
   const name = path.extname(href) ? (getElementName(href)) : `${(getElementName(href))}.html`;
@@ -44,7 +37,8 @@ const getSources = (html, url, assetsFolderName) => {
     const itemSources = html(itemName)
       .toArray()
       .map((item) => ({
-        ...item, src: getSource(html(item).attr(itemSrcAttribute), url.href),
+        ...item,
+        src: (new URL(html(item).attr(itemSrcAttribute), url.href)),
       }))
       .filter(({ src }) => src.origin === url.origin)
       .map((item) => {

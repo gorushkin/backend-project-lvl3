@@ -31,7 +31,7 @@ const testData = {
     testName: 'test get/write img',
     inputFilename: 'img.jpg',
     outputFilenames: [
-      'ru-hexlet-io-courses-assets-professions-img01.jpg',
+      'ru-hexlet-io-assets-professions-img01.jpg',
       'ru-hexlet-io-assets-professions-img02.jpg',
     ],
     expectedFile: getFile('img.jpg'),
@@ -40,7 +40,7 @@ const testData = {
     testName: 'test get/write css',
     inputFilename: 'style.css',
     outputFilenames: [
-      'ru-hexlet-io-courses-assets-application.css',
+      'ru-hexlet-io-assets-application.css',
       'ru-hexlet-io-css-main.css',
     ],
     expectedFile: getFile('style.css'),
@@ -64,18 +64,18 @@ describe('test sources dounloading', () => {
 
     nock('https://ru.hexlet.io/')
       .get('/courses/').reply(200, testData.html.expectedFile);
-    nock('https://ru.hexlet.io/courses')
+    nock('https://ru.hexlet.io/')
       .get('/assets/professions/img01.jpg')
       .reply(200, testData.img.expectedFile);
     nock('https://ru.hexlet.io/')
       .get('/assets/professions/img02.jpg')
       .reply(200, testData.img.expectedFile);
     nock('https://ru.hexlet.io/')
-      .get('/courses/assets/application.css').reply(200, testData.css.expectedFile);
+      .get('/assets/application.css').reply(200, testData.css.expectedFile);
     nock('https://ru.hexlet.io/')
       .get('/css/main.css').reply(200, testData.css.expectedFile);
     nock('https://ru.hexlet.io/')
-      .get('/courses/courses').reply(200, '');
+      .get('/courses').reply(200, '');
     nock('https://ru.hexlet.io/')
       .get('/packs/js/runtime.js').reply(200, testData.js.expectedFile);
   });
