@@ -27,17 +27,15 @@ const getHtmlFile = (targetUrl) => axios
   .get(targetUrl.href)
   .then((response) => cheerio.load(response.data, { decodeEntities: false }));
 
-const getElementFilename = (href) => {
-  const name = path.extname(href) ? (getElementName(href)) : `${(getElementName(href))}.html`;
-  return name;
-};
+const getElementFilename = (href) => (path.extname(href) ? (getElementName(href)) : `${(getElementName(href))}.html`);
+
+const isSourceLocal = (source, url) => (new URL(source, url.href)).origin === url.origin;
 
 const getSources = (html, url, assetsFolderName) => {
   const sources = Object.entries(elements).reduce((acc, [itemName, itemSrcAttribute]) => {
     const itemSources = html(itemName)
       .toArray()
-      .filter((item) => (
-        new URL(html(item).attr(itemSrcAttribute), url.href)).origin === url.origin)
+      .filter((item) => isSourceLocal(html(item).attr(itemSrcAttribute), url))
       .map((item) => {
         const source = (new URL(html(item).attr(itemSrcAttribute), url.href)).href;
         const filename = getElementFilename(source);
