@@ -36,14 +36,11 @@ const getSources = (html, url, assetsFolderName) => {
   const sources = Object.entries(elements).reduce((acc, [itemName, itemSrcAttribute]) => {
     const itemSources = html(itemName)
       .toArray()
-      .map((item) => ({
-        ...item,
-        src: (new URL(html(item).attr(itemSrcAttribute), url.href)),
-      }))
-      .filter(({ src }) => src.origin === url.origin)
+      .filter((item) => (
+        new URL(html(item).attr(itemSrcAttribute), url.href)).origin === url.origin)
       .map((item) => {
-        const source = item.src.href;
-        const filename = getElementFilename(item.src.href);
+        const source = (new URL(html(item).attr(itemSrcAttribute), url.href)).href;
+        const filename = getElementFilename(source);
         html(item).attr(itemSrcAttribute, path.join(assetsFolderName, filename));
         return {
           filename, source,
