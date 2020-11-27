@@ -21,7 +21,7 @@ const getElementName = (source) => {
 };
 
 const createAssetsFolder = (assetsFolderPath) => fs
-  .promises.mkdir(assetsFolderPath, { recursive: true }).catch(() => { throw new Error(`There is folder with ${assetsFolderPath} name`); });
+  .promises.mkdir(assetsFolderPath).catch(() => { throw new Error('There is no folder with that name'); });
 
 const getHtmlFile = (targetUrl) => axios
   .get(targetUrl.href)
