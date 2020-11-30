@@ -73,6 +73,7 @@ const downloadElements = (html, sources, folderPath, filePath) => {
       })
       .then((response) => {
         const itemPath = path.join(folderPath, item.filename);
+        log('itemPath', itemPath);
         return fs.promises.writeFile(itemPath, response.data, 'utf-8').catch(console.error);
       });
   });
