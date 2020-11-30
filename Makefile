@@ -7,6 +7,9 @@ build:
 test:
 	npm test
 
+debug:
+	npm run testdebug
+
 test-coverage:
 	npm test -- --coverage
 

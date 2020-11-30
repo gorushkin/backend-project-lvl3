@@ -2,6 +2,13 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import cheerio from 'cheerio';
+import debug from 'debug';
+import 'axios-debug-log';
+
+const log = debug('page-loader');
+
+const appName = 'page-loader';
+debug('booting %o', appName);
 
 const elements = {
   img: 'src',
@@ -55,6 +62,10 @@ const getSources = (html, url, assetsFolderName) => {
 
 const downloadElements = (html, sources, folderPath, filePath) => {
   const promises = sources.map((item) => {
+    log('---source and file name---');
+    log(html(item).attr(item.tag));
+    log(item.source);
+    log(item.filename);
     html(item).attr(item.tag, item.url);
     return axios
       .get(item.source, {

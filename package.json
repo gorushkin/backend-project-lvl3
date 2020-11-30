@@ -9,6 +9,7 @@
   },
   "scripts": {
     "test": "npx jest",
+    "testdebug": "DEBUG=page-loader npx jest",
     "prepublishOnly": "npm run build",
     "start": "node src/index.js"
   },
@@ -43,8 +44,10 @@
   },
   "dependencies": {
     "axios": "^0.21.0",
+    "axios-debug-log": "^0.8.2",
     "cheerio": "^1.0.0-rc.3",
     "commander": "^6.2.0",
+    "debug": "^4.3.1",
     "iconv-lite": "^0.6.2",
     "jschardet": "^2.2.1"
   }
