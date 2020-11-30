@@ -8,7 +8,7 @@
     "page-loader": "src/bin/page-loader.js"
   },
   "scripts": {
-    "test": "NODE_OPTIONS=--experimental-vm-modules npx jest",
+    "test": "npx jest",
     "prepublishOnly": "npm run build",
     "start": "node src/index.js"
   },
@@ -44,6 +44,8 @@
   "dependencies": {
     "axios": "^0.21.0",
     "cheerio": "^1.0.0-rc.3",
-    "commander": "^6.2.0"
+    "commander": "^6.2.0",
+    "iconv-lite": "^0.6.2",
+    "jschardet": "^2.2.1"
   }
 }
