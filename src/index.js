@@ -24,7 +24,10 @@ const updateName = (url) => {
 const createAssetsFolder = (assetsFolderPath) => fs
   .promises.access(assetsFolderPath)
   .then(() => console.log('Folder exists'))
-  .catch(() => fs.promises.mkdir(assetsFolderPath));
+  .catch(() => {
+    log('assets folder does not exist');
+    return fs.promises.mkdir(assetsFolderPath);
+  });
 
 const getHtmlFile = (targetUrl) => axios
   .get(targetUrl.href)
@@ -62,10 +65,9 @@ const getSources = (html, url, assetsFolderName) => {
 
 const downloadElements = (html, sources, folderPath, filePath) => {
   const promises = sources.map((item) => {
-    log('---source and file name---');
-    log(html(item).attr(item.tag));
-    log(item.source);
-    log(item.filename);
+    log('dom element name', html(item).attr(item.tag));
+    log('item.source', item.source);
+    log('item.filename', item.filename);
     html(item).attr(item.tag, item.url);
     return axios
       .get(item.source, {

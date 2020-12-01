@@ -9,7 +9,7 @@
   },
   "scripts": {
     "test": "npx jest",
-    "testdebug": "DEBUG=page-loader npx jest",
+    "test:debug": "DEBUG=page-loader npx jest",
     "prepublishOnly": "npm run build",
     "start": "node src/index.js"
   },
