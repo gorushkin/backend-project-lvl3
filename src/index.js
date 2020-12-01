@@ -9,7 +9,7 @@ const elements = {
   script: 'src',
 };
 
-const updateName = (url) => {
+const getSlugName = (url) => {
   const { host, pathname } = new URL(url);
   return (`${host}${pathname}`).replace(/[^A-Za-z0-9]/g, '-').replace(/-$/i, '');
 };
@@ -24,62 +24,64 @@ const getHtmlFile = (targetUrl) => axios
   .then((response) => cheerio.load(response.data, { decodeEntities: false }));
 
 const getElementFilename = (source) => {
-  const { ext, name } = path.parse(source);
+  const { ext, name, dir } = path.parse(source);
   const extension = ext || '.html';
-  const namePrefix = updateName(path.dirname(source));
+  const namePrefix = getSlugName(dir);
   return `${namePrefix}-${name}${extension}`;
 };
 
-const isSourceLocal = (source, url) => (new URL(source, url.href)).origin === url.origin;
+const isSourceLocal = (source, url) => (new URL(source, url)).origin === url;
 
-const getSources = (html, url, assetsFolderName) => {
+const getSources = (parsedDom, url, assetsFolderName, assetsFolderPath) => {
   const sources = Object.entries(elements).reduce((acc, [itemName, itemSrcAttribute]) => {
-    const itemSources = html(itemName)
+    const itemSources = parsedDom(itemName)
       .toArray()
       .map((item) => {
-        const source = (new URL(html(item).attr(itemSrcAttribute), url.href)).href;
-        const filename = getElementFilename(source);
-        return {
-          ...item,
-          source,
-          filename,
-          tag: itemSrcAttribute,
-          url: path.join(assetsFolderName, filename),
-        };
+        const source = (new URL(parsedDom(item).attr(itemSrcAttribute), url)).href;
+        return { ...item, source };
       })
-      .filter(({ source }) => isSourceLocal(source, url));
+      .filter(({ source }) => isSourceLocal(source, url))
+      .map((item) => {
+        const filename = getElementFilename(item.source);
+        const itemPath = path.join(assetsFolderPath, filename);
+        parsedDom(item).attr(itemSrcAttribute, path.join(assetsFolderName, filename));
+        return { source: item.source, itemPath };
+      });
     return [...acc, ...itemSources];
   }, []);
-  return [html, sources];
+  return [parsedDom, sources];
 };
 
-const downloadElements = (html, sources, folderPath, filePath) => {
-  const promises = sources.map((item) => {
-    html(item).attr(item.tag, item.url);
-    return axios
-      .get(item.source, {
-        responseType: 'arraybuffer',
-      })
-      .then((response) => {
-        const itemPath = path.join(folderPath, item.filename);
-        return fs.promises.writeFile(itemPath, response.data, 'utf-8').catch(console.error);
-      });
-  });
-  return fs.promises.writeFile(filePath, html.html(), 'utf-8').then(() => Promise.all(promises));
+const downloadElements = (parsedDom, sources, filePath) => {
+  const promises = sources.map((item) => axios
+    .get(item.source, {
+      responseType: 'arraybuffer',
+    })
+    .then((response) => fs.promises.writeFile(item.itemPath, response.data, 'utf-8').catch(console.error)));
+  return fs.promises.writeFile(filePath, parsedDom.html(), 'utf-8').then(() => Promise.all(promises));
 };
 
 export default (output, url) => {
   const targetUrl = new URL(url);
   const pathToProject = path.resolve(process.cwd(), output);
-  const projectName = updateName(url);
+  const projectName = getSlugName(url);
   const filePath = path.join(pathToProject, `${projectName}.html`);
   const assetsFolderName = `${projectName}_files`;
   const assetsFolderPath = path.join(pathToProject, assetsFolderName);
 
   return createAssetsFolder(assetsFolderPath)
     .then(() => getHtmlFile(targetUrl))
-    .then((html) => getSources(html, targetUrl, assetsFolderName))
-    .then(([html, sources]) => downloadElements(html, sources, assetsFolderPath, filePath))
+    .then((parsedDom) => getSources(
+      parsedDom,
+      targetUrl.origin,
+      assetsFolderName,
+      assetsFolderPath,
+    ))
+    .then(([parsedDom, sources]) => (downloadElements(
+      parsedDom,
+      sources,
+      filePath,
+    )))
     .then(() => pathToProject)
     .catch(console.error);
 };
