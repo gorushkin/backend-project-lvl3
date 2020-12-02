@@ -21,13 +21,13 @@ const updateName = (url) => {
   return (`${host}${pathname}`).replace(/[^A-Za-z0-9]/g, '-').replace(/-$/i, '');
 };
 
-const createAssetsFolder = (assetsFolderPath) => fs
+const createAssetsFolder = (assetsFolderPath, html) => fs
   .promises.access(assetsFolderPath)
   .then(() => console.log('Folder exists'))
   .catch(() => {
     log('assets folder does not exist');
     log(`creating at ${assetsFolderPath}`);
-    return fs.promises.mkdir(assetsFolderPath);
+    return fs.promises.mkdir(assetsFolderPath).then(() => html);
   });
 
 const getHtmlFile = (targetUrl) => axios
@@ -78,7 +78,8 @@ const downloadElements = (html, sources, folderPath, filePath) => {
         const itemPath = path.join(folderPath, item.filename);
         log('itemPath', itemPath);
         return fs.promises.writeFile(itemPath, response.data, 'utf-8').catch(console.error);
-      });
+      })
+      .catch((error) => console.log(`Could not download ${error.config.url}.Got response ${error.message}`));
   });
   return fs.promises.writeFile(filePath, html.html(), 'utf-8').then(() => Promise.all(promises));
 };
@@ -91,10 +92,9 @@ export default (output, url) => {
   const assetsFolderName = `${projectName}_files`;
   const assetsFolderPath = path.join(pathToProject, assetsFolderName);
 
-  return createAssetsFolder(assetsFolderPath)
-    .then(() => getHtmlFile(targetUrl))
+  return getHtmlFile(targetUrl)
+    .then((html) => createAssetsFolder(assetsFolderPath, html))
     .then((html) => getSources(html, targetUrl, assetsFolderName))
     .then(([html, sources]) => downloadElements(html, sources, assetsFolderPath, filePath))
-    .then(() => pathToProject)
-    .catch(console.error);
+    .then(() => pathToProject);
 };
