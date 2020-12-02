@@ -2,6 +2,13 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import cheerio from 'cheerio';
+import debug from 'debug';
+import 'axios-debug-log';
+
+const log = debug('page-loader');
+
+const appName = 'page-loader';
+debug('booting %o', appName);
 
 const elements = {
   img: 'src',
@@ -17,7 +24,11 @@ const updateName = (url) => {
 const createAssetsFolder = (assetsFolderPath) => fs
   .promises.access(assetsFolderPath)
   .then(() => console.log('Folder exists'))
-  .catch(() => fs.promises.mkdir(assetsFolderPath));
+  .catch(() => {
+    log('assets folder does not exist');
+    log(`creating at ${assetsFolderPath}`);
+    return fs.promises.mkdir(assetsFolderPath);
+  });
 
 const getHtmlFile = (targetUrl) => axios
   .get(targetUrl.href)
@@ -55,6 +66,9 @@ const getSources = (html, url, assetsFolderName) => {
 
 const downloadElements = (html, sources, folderPath, filePath) => {
   const promises = sources.map((item) => {
+    log('dom element name', html(item).attr(item.tag));
+    log('item.source', item.source);
+    log('item.filename', item.filename);
     html(item).attr(item.tag, item.url);
     return axios
       .get(item.source, {
@@ -62,6 +76,7 @@ const downloadElements = (html, sources, folderPath, filePath) => {
       })
       .then((response) => {
         const itemPath = path.join(folderPath, item.filename);
+        log('itemPath', itemPath);
         return fs.promises.writeFile(itemPath, response.data, 'utf-8').catch(console.error);
       });
   });
