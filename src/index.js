@@ -37,10 +37,10 @@ const getSources = (parsedDom, url, assetsFolderName, assetsFolderPath) => {
     const itemSources = parsedDom(itemName)
       .toArray()
       .map((item) => {
-        const source = (new URL(parsedDom(item).attr(itemSrcAttribute), url)).href;
+        const source = (new URL(item.attribs[itemSrcAttribute], url)).href;
         return { ...item, source };
       })
-      .filter(({ source }) => isSourceLocal(source, url))
+      .filter(({ source }) => isSourceLocal(source, url.origin))
       .map((item) => {
         const filename = getElementFilename(item.source);
         const itemPath = path.join(assetsFolderPath, filename);
@@ -73,7 +73,7 @@ export default (output, url) => {
     .then(() => getHtmlFile(targetUrl))
     .then((parsedDom) => getSources(
       parsedDom,
-      targetUrl.origin,
+      targetUrl,
       assetsFolderName,
       assetsFolderPath,
     ))
