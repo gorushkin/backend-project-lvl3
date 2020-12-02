@@ -9,9 +9,11 @@ const elements = {
   script: 'src',
 };
 
-const getSlugName = (url) => {
+const getSlugName = (str) => str.replace(/[^A-Za-z0-9]/g, '-').replace(/-$/i, '');
+
+const getParsedUrl = (url) => {
   const { host, pathname } = new URL(url);
-  return (`${host}${pathname}`).replace(/[^A-Za-z0-9]/g, '-').replace(/-$/i, '');
+  return `${host}${pathname}`;
 };
 
 const createAssetsFolder = (assetsFolderPath) => fs
@@ -26,8 +28,8 @@ const getHtmlFile = (targetUrl) => axios
 const getElementFilename = (source) => {
   const { ext, name, dir } = path.parse(source);
   const extension = ext || '.html';
-  const namePrefix = getSlugName(dir);
-  return `${namePrefix}-${name}${extension}`;
+  const filename = getSlugName(getParsedUrl(path.join(dir, name)));
+  return `${filename}${extension}`;
 };
 
 const isSourceLocal = (source, url) => (new URL(source, url)).origin === url;
@@ -64,7 +66,7 @@ const downloadElements = (parsedDom, sources, filePath) => {
 export default (output, url) => {
   const targetUrl = new URL(url);
   const pathToProject = path.resolve(process.cwd(), output);
-  const projectName = getSlugName(url);
+  const projectName = getSlugName(getParsedUrl(url));
   const filePath = path.join(pathToProject, `${projectName}.html`);
   const assetsFolderName = `${projectName}_files`;
   const assetsFolderPath = path.join(pathToProject, assetsFolderName);
