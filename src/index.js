@@ -26,6 +26,7 @@ const createAssetsFolder = (assetsFolderPath) => fs
   .then(() => console.log('Folder exists'))
   .catch(() => {
     log('assets folder does not exist');
+    log(`creating at ${assetsFolderPath}`);
     return fs.promises.mkdir(assetsFolderPath);
   });
 
