@@ -100,14 +100,13 @@ describe.skip('successful tests', () => {
 });
 
 describe('unsuccessful tests', () => {
-  test('output folder is not exist', () => {
-    tempDir = '/tmp/tmp';
+  test('output folder is not exist', async () => {
+    tempDir = '/tmp/tmp2/';
 
     nock('https://ru.hexlet.io/')
       .get('/courses/').reply(200, testData.html.expectedFile);
-    expect(async () => {
-      await pageLoader(tempDir, url);
-    }).rejects.toThrow();
+
+    await expect(pageLoader(tempDir, url)).rejects.toThrow('Output folder does not exist');
   });
 
   test.skip('wrong site', async () => {

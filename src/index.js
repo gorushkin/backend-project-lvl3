@@ -28,6 +28,10 @@ const createAssetsFolder = (assetsFolderPath, html) => fs
     log('assets folder does not exist');
     log(`creating at ${assetsFolderPath}`);
     return fs.promises.mkdir(assetsFolderPath).then(() => html);
+    // .catch((err) => {
+    //   console.log(err);
+    //   throw err;
+    // });
   });
 
 const getHtmlFile = (targetUrl) => axios
@@ -104,7 +108,7 @@ export default (output, url) => {
     .then(([html, sources]) => downloadElements(html, sources, assetsFolderPath, filePath))
     .then(() => pathToProject)
     .catch((error) => {
-      error.message = errorMapping[error.code](error) || 'Unexpected error occurred';
+      error.message = errorMapping[error.code] ? errorMapping[error.code](error) : 'Unexpected error occurred';
       throw error;
     });
 };
