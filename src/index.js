@@ -84,6 +84,12 @@ const downloadElements = (html, sources, folderPath, filePath) => {
   return fs.promises.writeFile(filePath, html.html(), 'utf-8').then(() => Promise.all(promises));
 };
 
+const errorMapping = {
+  ENOENT: () => 'Output folder does not exist',
+  ENOTFOUND: (error) => `Could not find the page - ${error.config.url}`,
+  ECONNREFUSED: (error) => `Could not find the page - ${error.config.url}`,
+};
+
 export default (output, url) => {
   const targetUrl = new URL(url);
   const pathToProject = path.resolve(process.cwd(), output);
@@ -96,5 +102,9 @@ export default (output, url) => {
     .then((html) => createAssetsFolder(assetsFolderPath, html))
     .then((html) => getSources(html, targetUrl, assetsFolderName))
     .then(([html, sources]) => downloadElements(html, sources, assetsFolderPath, filePath))
-    .then(() => pathToProject);
+    .then(() => pathToProject)
+    .catch((error) => {
+      error.message = errorMapping[error.code](error) || 'Unexpected error occurred';
+      throw error;
+    });
 };

@@ -3,12 +3,6 @@ import program from 'commander';
 
 import pageLoader from '../index.js';
 
-const errorMapping = {
-  ENOENT: () => console.error('Output folder is not exist'),
-  ENOTFOUND: (error) => console.error(`Could not find the page - ${error.config.url}`),
-  ECONNREFUSED: (error) => console.error(`Could not find the page - ${error.config.url}`),
-};
-
 program
   .version('1.0.0')
   .option('--output [type]', 'output format', '')
@@ -17,6 +11,6 @@ program
   .action((url) => {
     pageLoader(program.output, url)
       .then((outputDir) => console.log(`Open ${outputDir}`))
-      .catch((error) => errorMapping[error.code](error));
+      .catch((error) => console.error(error.message));
   })
   .parse(process.argv);
