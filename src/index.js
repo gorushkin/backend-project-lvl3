@@ -30,19 +30,21 @@ const getElementFilename = (source) => {
   return `${filename}${extension}`;
 };
 
-const getSources = (parsedDom, url, assetsFolderName) => {
+const getSources = (parsedDom, targetUrl, assetsFolderName) => {
   const sources = Object.entries(elements).reduce((acc, [itemName, itemSrcAttribute]) => {
     const itemSources = parsedDom(itemName)
       .toArray()
       .map((item) => {
-        const source = (new URL(item.attribs[itemSrcAttribute], url));
-        return { ...item, source };
+        const url = (new URL(item.attribs[itemSrcAttribute], targetUrl));
+        // const item.url = (new URL(item.attribs[itemSrcAttribute], targetUrl))
+        return { ...item, url };
       })
-      .filter(({ source }) => source.origin === url.origin)
+      .filter(({ url }) => url.origin === targetUrl.origin)
       .map((item) => {
-        const filename = getElementFilename(item.source.href);
-        parsedDom(item).attr(itemSrcAttribute, path.join(assetsFolderName, filename));
-        return { source: item.source.href, filename };
+        const url = item.url.href;
+        const filename = getElementFilename(url);
+        item.attribs[itemSrcAttribute] = path.join(assetsFolderName, filename);
+        return { url, filename };
       });
     return [...acc, ...itemSources];
   }, []);
@@ -51,7 +53,7 @@ const getSources = (parsedDom, url, assetsFolderName) => {
 
 const downloadElements = (parsedDom, sources, filePath, assetsFolderPath) => {
   const promises = sources.map((item) => axios
-    .get(item.source, {
+    .get(item.url, {
       responseType: 'arraybuffer',
     })
     .then((response) => {
