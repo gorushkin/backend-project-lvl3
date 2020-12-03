@@ -36,7 +36,6 @@ const getSources = (parsedDom, targetUrl, assetsFolderName) => {
       .toArray()
       .map((item) => {
         const url = (new URL(item.attribs[itemSrcAttribute], targetUrl));
-        // const item.url = (new URL(item.attribs[itemSrcAttribute], targetUrl))
         return { ...item, url };
       })
       .filter(({ url }) => url.origin === targetUrl.origin)
