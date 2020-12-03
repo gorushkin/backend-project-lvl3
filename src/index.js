@@ -4,6 +4,7 @@ import path from 'path';
 import cheerio from 'cheerio';
 import debug from 'debug';
 import 'axios-debug-log';
+import errorHandler from './errorHandler';
 
 const log = debug('page-loader');
 
@@ -28,10 +29,6 @@ const createAssetsFolder = (assetsFolderPath, html) => fs
     log('assets folder does not exist');
     log(`creating at ${assetsFolderPath}`);
     return fs.promises.mkdir(assetsFolderPath).then(() => html);
-    // .catch((err) => {
-    //   console.log(err);
-    //   throw err;
-    // });
   });
 
 const getHtmlFile = (targetUrl) => axios
@@ -88,12 +85,6 @@ const downloadElements = (html, sources, folderPath, filePath) => {
   return fs.promises.writeFile(filePath, html.html(), 'utf-8').then(() => Promise.all(promises));
 };
 
-const errorMapping = {
-  ENOENT: () => 'Output folder does not exist',
-  ENOTFOUND: (error) => `Could not find the page - ${error.config.url}`,
-  ECONNREFUSED: (error) => `Could not find the page - ${error.config.url}`,
-};
-
 export default (output, url) => {
   const targetUrl = new URL(url);
   const pathToProject = path.resolve(process.cwd(), output);
@@ -107,8 +98,5 @@ export default (output, url) => {
     .then((html) => getSources(html, targetUrl, assetsFolderName))
     .then(([html, sources]) => downloadElements(html, sources, assetsFolderPath, filePath))
     .then(() => pathToProject)
-    .catch((error) => {
-      error.message = errorMapping[error.code] ? errorMapping[error.code](error) : 'Unexpected error occurred';
-      throw error;
-    });
+    .catch(errorHandler);
 };

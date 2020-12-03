@@ -54,7 +54,7 @@ let tempDir;
 
 const tests = ['img', 'css', 'js'].map((format) => [testData[format].testName, testData[format].outputFilenames, testData[format].expectedFile]);
 
-describe.skip('successful tests', () => {
+describe('successful tests', () => {
   beforeEach(async () => {
     tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
 
@@ -100,7 +100,7 @@ describe.skip('successful tests', () => {
 });
 
 describe('unsuccessful tests', () => {
-  test('output folder is not exist', async () => {
+  test('Output folder is not exist', async () => {
     tempDir = '/tmp/tmp2/';
 
     nock('https://ru.hexlet.io/')
@@ -109,12 +109,37 @@ describe('unsuccessful tests', () => {
     await expect(pageLoader(tempDir, url)).rejects.toThrow('Output folder does not exist');
   });
 
-  test.skip('wrong site', async () => {
+  test('Permission denied', async () => {
+    tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
+
+    nock('https://ru.hexlet.io/')
+      .get('/courses/').reply(200, testData.html.expectedFile);
+
+    await fs.promises.chmod(tempDir, 0);
+    await expect(pageLoader(tempDir, url)).rejects.toThrow('Permission denied');
+  });
+
+  test('Request failed with status code 500', async () => {
+    nock('https://ru.hexlet.io/')
+      .get('/courses/').reply(500, '');
+
+    await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
+    expect(pageLoader(tempDir, url)).rejects.toThrow('The server has encountered a situation it doesn\'t know how to handle');
+  });
+
+  test('Request failed with status code 404', async () => {
     nock('https://ru.hexlet.io/')
       .get('/courses/').reply(404, '');
 
-    tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
+    await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
+    expect(pageLoader(tempDir, url)).rejects.toThrow('The server can not find requested resource');
+  });
 
-    expect(pageLoader(tempDir, url)).rejects.toMatchObject('Error: Request failed with status code 404');
+  test('Request failed with status code 410', async () => {
+    nock('https://ru.hexlet.io/')
+      .get('/courses/').reply(410, '');
+
+    await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
+    expect(pageLoader(tempDir, url)).rejects.toThrow('Request failed with status code 410');
   });
 });
