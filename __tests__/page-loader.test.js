@@ -50,6 +50,12 @@ const testData = {
   },
 };
 
+const errorTestsData = [
+  ['The server has encountered a situation it doesn\'t know how to handle', 500],
+  ['The server can not find requested resource', 404],
+  ['Request failed with status code 410', 410],
+];
+
 let tempDir;
 
 const tests = ['img', 'css', 'js'].map((format) => [testData[format].testName, testData[format].outputFilenames, testData[format].expectedFile]);
@@ -109,9 +115,11 @@ describe('unsuccessful tests', () => {
     await expect(pageLoader(tempDir, url)).rejects.toThrow('Output folder does not exist');
   });
 
-  test('Permission denied', async () => {
+  beforeEach(async () => {
     tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
+  });
 
+  test('Permission denied', async () => {
     nock('https://ru.hexlet.io/')
       .get('/courses/').reply(200, testData.html.expectedFile);
 
@@ -119,27 +127,11 @@ describe('unsuccessful tests', () => {
     await expect(pageLoader(tempDir, url)).rejects.toThrow('Permission denied');
   });
 
-  test('Request failed with status code 500', async () => {
+  test.each(errorTestsData)('%s,', async (errortext, statusCode) => {
     nock('https://ru.hexlet.io/')
-      .get('/courses/').reply(500, '');
+      .get('/courses/').reply(statusCode, testData.html.expectedFile);
 
     await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-    expect(pageLoader(tempDir, url)).rejects.toThrow('The server has encountered a situation it doesn\'t know how to handle');
-  });
-
-  test('Request failed with status code 404', async () => {
-    nock('https://ru.hexlet.io/')
-      .get('/courses/').reply(404, '');
-
-    await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-    expect(pageLoader(tempDir, url)).rejects.toThrow('The server can not find requested resource');
-  });
-
-  test('Request failed with status code 410', async () => {
-    nock('https://ru.hexlet.io/')
-      .get('/courses/').reply(410, '');
-
-    await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-    expect(pageLoader(tempDir, url)).rejects.toThrow('Request failed with status code 410');
+    expect(pageLoader(tempDir, url)).rejects.toThrow(errortext);
   });
 });

@@ -4,7 +4,7 @@ import path from 'path';
 import cheerio from 'cheerio';
 import debug from 'debug';
 import 'axios-debug-log';
-import errorHandler from './errorHandler';
+import getFriendlyError from './getFriendlyError.js';
 
 const log = debug('page-loader');
 
@@ -98,5 +98,5 @@ export default (output, url) => {
     .then((html) => getSources(html, targetUrl, assetsFolderName))
     .then(([html, sources]) => downloadElements(html, sources, assetsFolderPath, filePath))
     .then(() => pathToProject)
-    .catch(errorHandler);
+    .catch(getFriendlyError);
 };
