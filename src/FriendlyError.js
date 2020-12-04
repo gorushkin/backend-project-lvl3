@@ -24,13 +24,9 @@ const getErrorMessage = (error) => {
   return message;
 };
 
-class PageLoadError extends Error {
+export default class FriendlyError extends Error {
   constructor(error) {
     super();
     this.message = getErrorMessage(error);
   }
 }
-
-export default (e) => {
-  throw new PageLoadError(e);
-};
