@@ -36,14 +36,13 @@ const getSources = (parsedDom, targetUrl, assetsFolderName) => {
       .toArray()
       .map((item) => {
         const url = (new URL(item.attribs[itemSrcAttribute], targetUrl));
-        return { ...item, url };
+        return { item, url };
       })
       .filter(({ url }) => url.origin === targetUrl.origin)
-      .map((item) => {
-        const url = item.url.href;
-        const filename = getElementFilename(url);
+      .map(({ item, url: { href } }) => {
+        const filename = getElementFilename(href);
         item.attribs[itemSrcAttribute] = path.join(assetsFolderName, filename);
-        return { url, filename };
+        return { url: href, filename };
       });
     return [...acc, ...itemSources];
   }, []);
