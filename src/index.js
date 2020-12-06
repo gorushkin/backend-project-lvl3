@@ -4,6 +4,7 @@ import path from 'path';
 import cheerio from 'cheerio';
 import debug from 'debug';
 import 'axios-debug-log';
+import Listr from 'listr';
 import FriendlyError from './FriendlyError.js';
 
 const log = debug('page-loader');
@@ -64,18 +65,26 @@ const getSources = (parsedDom, targetUrl, assetsFolderName) => {
 const downloadElements = (parsedDom, sources, filePath, assetsFolderPath) => {
   const promises = sources.map((item) => {
     log('dom element name', parsedDom(item).attr(item.tag));
-    log('item.source', item.source);
+    log('item.url', item.url);
     log('item.filename', item.filename);
-    return axios
-      .get(item.url, {
-        responseType: 'arraybuffer',
-      })
-      .then((response) => {
-        const itemPath = path.join(assetsFolderPath, item.filename);
-        log('itemPath', itemPath);
-        return fs.promises.writeFile(itemPath, response.data, 'utf-8').catch(console.error);
-      })
-      .catch((error) => console.log(`Could not download ${error.config.url}.Got response ${error.message}`));
+    return new Listr(
+      [
+        {
+          title: item.url,
+          task: () => axios
+            .get(item.url, {
+              responseType: 'arraybuffer',
+            })
+            .then((response) => {
+              const itemPath = path.join(assetsFolderPath, item.filename);
+              log('itemPath', itemPath);
+              return fs.promises.writeFile(itemPath, response.data, 'utf-8').catch(console.error);
+            })
+            .catch((error) => console.log(`Could not download ${error.config.url}.Got response ${error.message}`)),
+        },
+      ],
+      { concurrent: true, exitOnError: false },
+    ).run();
   });
   return fs.promises.writeFile(filePath, parsedDom.html(), 'utf-8').then(() => Promise.all(promises));
 };
