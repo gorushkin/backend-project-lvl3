@@ -72,7 +72,7 @@ const downloadElements = (parsedDom, sources, filePath, assetsFolderPath) => {
             .then((response) => {
               const itemPath = path.join(assetsFolderPath, item.filename);
               log('itemPath', itemPath);
-              return fs.promises.writeFile(itemPath, response.data, 'utf-8').catch(console.error);
+              return fs.promises.writeFile(itemPath, response.data, 'utf-8');
             })
             .catch((error) => console.log(`Could not download ${error.config.url}.Got response ${error.message}`)),
         },
