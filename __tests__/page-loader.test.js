@@ -38,7 +38,7 @@ const testData = {
     testName: 'test get/write css',
     outputFilenames: [
       'ru-hexlet-io-assets-application.css',
-      'ru-hexlet-io-css-main.css',
+      'ru-hexlet-io-css-ma-in.css',
     ],
     expectedFile: getFile('style.css'),
 
@@ -68,7 +68,7 @@ beforeEach(async () => {
   nock('https://ru.hexlet.io/')
     .get('/assets/application.css').reply(200, testData.css.expectedFile);
   nock('https://ru.hexlet.io/')
-    .get('/css/main.css').reply(200, testData.css.expectedFile);
+    .get('/css/ma!in.css').reply(200, testData.css.expectedFile);
   nock('https://ru.hexlet.io/')
     .get('/courses').reply(200, '');
   nock('https://ru.hexlet.io/')
