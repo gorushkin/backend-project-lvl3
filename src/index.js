@@ -4,6 +4,7 @@ import path from 'path';
 import cheerio from 'cheerio';
 import debug from 'debug';
 import 'axios-debug-log';
+import FriendlyError from './FriendlyError.js';
 
 const log = debug('page-loader');
 
@@ -21,13 +22,13 @@ const convertUrlToSlugName = (url) => {
   return (`${host}${pathname}`).replace(/[^A-Za-z0-9]/g, '-').replace(/-$/i, '');
 };
 
-const createAssetsFolder = (assetsFolderPath) => fs
+const createAssetsFolder = (assetsFolderPath, html) => fs
   .promises.access(assetsFolderPath)
   .then(() => console.log('Folder exists'))
   .catch(() => {
     log('assets folder does not exist');
     log(`creating at ${assetsFolderPath}`);
-    return fs.promises.mkdir(assetsFolderPath);
+    return fs.promises.mkdir(assetsFolderPath).then(() => html);
   });
 
 const getHtmlFile = (targetUrl) => axios
@@ -73,7 +74,8 @@ const downloadElements = (parsedDom, sources, filePath, assetsFolderPath) => {
         const itemPath = path.join(assetsFolderPath, item.filename);
         log('itemPath', itemPath);
         return fs.promises.writeFile(itemPath, response.data, 'utf-8').catch(console.error);
-      });
+      })
+      .catch((error) => console.log(`Could not download ${error.config.url}.Got response ${error.message}`));
   });
   return fs.promises.writeFile(filePath, parsedDom.html(), 'utf-8').then(() => Promise.all(promises));
 };
@@ -86,19 +88,21 @@ export default (output, url) => {
   const assetsFolderName = `${projectName}_files`;
   const assetsFolderPath = path.join(pathToProject, assetsFolderName);
 
-  return createAssetsFolder(assetsFolderPath)
-    .then(() => getHtmlFile(targetUrl))
+  return getHtmlFile(targetUrl)
+    .then((parsedDom) => createAssetsFolder(assetsFolderPath, parsedDom))
     .then((parsedDom) => getSources(
       parsedDom,
       targetUrl,
       assetsFolderName,
     ))
-    .then(([parsedDom, sources]) => (downloadElements(
+    .then(([parsedDom, sources]) => downloadElements(
       parsedDom,
       sources,
       filePath,
       assetsFolderPath,
-    )))
+    ))
     .then(() => pathToProject)
-    .catch(console.error);
+    .catch((error) => {
+      throw new FriendlyError(error);
+    });
 };

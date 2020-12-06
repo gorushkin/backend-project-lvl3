@@ -9,6 +9,8 @@ program
   .arguments('<url>')
   .description('Configuration files creator.')
   .action((url) => {
-    pageLoader(program.output, url);
+    pageLoader(program.output, url)
+      .then((outputDir) => console.log(`Open ${outputDir}`))
+      .catch((error) => console.error(error.message));
   })
   .parse(process.argv);
