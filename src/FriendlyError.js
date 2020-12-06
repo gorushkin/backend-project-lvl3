@@ -4,6 +4,7 @@ const getErrorMessage = (error) => {
     ENOTFOUND: (e) => `Could not find the page - ${e.config.url}`,
     ECONNREFUSED: (e) => `Could not find the page - ${e.config.url}`,
     EACCES: () => 'Permission denied',
+    EEXIST: (e) => `Output folder is not empty, ${e.path}`,
   };
 
   const networkErrorMapping = {

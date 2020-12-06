@@ -24,13 +24,7 @@ const convertUrlToSlugName = (url) => {
 };
 
 const createAssetsFolder = (assetsFolderPath, html) => fs
-  .promises.access(assetsFolderPath)
-  .then(() => console.log('Folder exists'))
-  .catch(() => {
-    log('assets folder does not exist');
-    log(`creating at ${assetsFolderPath}`);
-    return fs.promises.mkdir(assetsFolderPath).then(() => html);
-  });
+  .promises.mkdir(assetsFolderPath).then(() => html);
 
 const getHtmlFile = (targetUrl) => axios
   .get(targetUrl.href)
@@ -83,7 +77,7 @@ const downloadElements = (parsedDom, sources, filePath, assetsFolderPath) => {
             .catch((error) => console.log(`Could not download ${error.config.url}.Got response ${error.message}`)),
         },
       ],
-      { concurrent: true, exitOnError: false },
+      { concurrent: true },
     ).run();
   });
   return fs.promises.writeFile(filePath, parsedDom.html(), 'utf-8').then(() => Promise.all(promises));
