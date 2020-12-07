@@ -5,9 +5,9 @@ import pageLoader from '../index.js';
 
 program
   .version('1.0.0')
-  .option('--output [type]', 'output format', '')
+  .option('--output [type]', 'output dir', '')
   .arguments('<url>')
-  .description('Configuration files creator.')
+  .description('Page-loader')
   .action((url) => {
     pageLoader(program.output, url)
       .then((outputDir) => console.log(`Open ${outputDir}`))
