@@ -57,30 +57,25 @@ const getSources = (parsedDom, targetUrl, assetsFolderName) => {
 };
 
 const downloadElements = (parsedDom, sources, filePath, assetsFolderPath) => {
-  const promises = sources.map((item) => {
+  const downloadTasks = new Listr(sources.map((item) => {
     log('dom element name', parsedDom(item).attr(item.tag));
     log('item.url', item.url);
     log('item.filename', item.filename);
-    return new Listr(
-      [
-        {
-          title: item.url,
-          task: () => axios
-            .get(item.url, {
-              responseType: 'arraybuffer',
-            })
-            .then((response) => {
-              const itemPath = path.join(assetsFolderPath, item.filename);
-              log('itemPath', itemPath);
-              return fs.promises.writeFile(itemPath, response.data, 'utf-8');
-            })
-            .catch((error) => console.log(`Could not download ${error.config.url}.Got response ${error.message}`)),
-        },
-      ],
-      { concurrent: true },
-    ).run();
-  });
-  return fs.promises.writeFile(filePath, parsedDom.html(), 'utf-8').then(() => Promise.all(promises));
+    return {
+      title: item.url,
+      task: () => axios
+        .get(item.url, {
+          responseType: 'arraybuffer',
+        })
+        .then((response) => {
+          const itemPath = path.join(assetsFolderPath, item.filename);
+          log('itemPath', itemPath);
+          return fs.promises.writeFile(itemPath, response.data, 'utf-8');
+        })
+        .catch((error) => console.log(`Could not download ${error.config.url}.Got response ${error.message}`)),
+    };
+  }), { concurrent: true });
+  return fs.promises.writeFile(filePath, parsedDom.html(), 'utf-8').then(() => downloadTasks.run());
 };
 
 export default (output, url) => {
