@@ -48,8 +48,8 @@ const testData = {
 };
 
 const networkErrorNames = [
-  ["The server has encountered a situation it doesn't know how to handle", 500],
-  ['The server can not find requested resource', 404],
+  ['Request failed with status code 500, https://ru.hexlet.io/courses/', 500],
+  ['Request failed with status code 404, https://ru.hexlet.io/courses/', 404],
   ['Request failed with status code 410', 410],
 ];
 

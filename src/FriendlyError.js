@@ -5,18 +5,10 @@ const systemErrorMapping = {
   EACCES: () => 'Permission denied',
 };
 
-const networkErrorMapping = {
-  400: 'Server could not understand the request due to invalid syntax',
-  403: 'You do not have access rights to the content',
-  404: 'The server can not find requested resource',
-  500: "The server has encountered a situation it doesn't know how to handle",
-  503: 'The server is not ready to handle the request',
-  504: 'Gateway Timeout',
-};
-
 const getErrorMessage = (error) => {
   if (error.response?.status) {
-    return networkErrorMapping[error.response.status] || error.message;
+    const message = `${error.message}, ${error.request.res.responseUrl}`;
+    return message;
   }
   const message = systemErrorMapping[error.code] ? systemErrorMapping[error.code](error) : 'Unexpected error occurred';
   return message;
