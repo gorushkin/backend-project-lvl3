@@ -11,6 +11,9 @@ program
   .action((url) => {
     pageLoader(program.output, url)
       .then((outputDir) => console.log(`Open ${outputDir}`))
-      .catch((error) => console.error(error.message));
+      .catch((error) => {
+        console.error(error.message);
+        process.exit(1);
+      });
   })
   .parse(process.argv);
