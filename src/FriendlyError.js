@@ -16,11 +16,9 @@ const networkErrorMapping = {
 
 const getErrorMessage = (error) => {
   if (error.response?.status) {
-    const message = networkErrorMapping[error.response.status] || error.message;
-    return message;
+    return networkErrorMapping[error.response.status] || error.message;
   }
-  const message = systemErrorMapping[error.code] || 'Unexpected error occurred';
-  return message;
+  return systemErrorMapping[error.code](error) || 'Unexpected error occurred';
 };
 
 export default class FriendlyError extends Error {
