@@ -1,27 +1,17 @@
-const getErrorMessage = (error) => {
-  const errorMapping = {
-    ENOENT: () => 'Output folder does not exist',
-    ENOTFOUND: (e) => `Could not find the page - ${e.config.url}`,
-    ECONNREFUSED: (e) => `Could not find the page - ${e.config.url}`,
-    EACCES: () => 'Permission denied',
-    EEXIST: (e) => `Output folder is not empty, ${e.path}`,
-  };
+const systemErrorMapping = {
+  ENOENT: () => 'Output folder does not exist',
+  ENOTFOUND: (e) => `Could not find the page - ${e.config.url}`,
+  ECONNREFUSED: (e) => `Could not find the page - ${e.config.url}`,
+  EACCES: () => 'Permission denied',
+  EEXIST: (e) => `Output folder is not empty, ${e.path}`,
+};
 
-  const networkErrorMapping = {
-    400: 'Server could not understand the request due to invalid syntax',
-    403: 'You do not have access rights to the content',
-    404: 'The server can not find requested resource',
-    500: "The server has encountered a situation it doesn't know how to handle",
-    503: 'The server is not ready to handle the request',
-    504: 'Gateway Timeout',
-  };
+const getErrorMessage = (error) => {
   if (error.response?.status) {
-    const message = networkErrorMapping[error.response.status]
-      ? networkErrorMapping[error.response.status]
-      : error.message;
+    const message = `${error.message}, ${error.request.res.responseUrl}`;
     return message;
   }
-  const message = errorMapping[error.code] ? errorMapping[error.code](error) : 'Unexpected error occurred';
+  const message = systemErrorMapping[error.code] ? systemErrorMapping[error.code](error) : 'Unexpected error occurred';
   return message;
 };
 

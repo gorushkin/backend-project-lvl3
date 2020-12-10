@@ -20,5 +20,5 @@ extends:
 rules:
   no-console: 0
   no-underscore-dangle:  ["error", { "allow": ["__filename", "__dirname"] }]
-  no-param-reassign: ["error", { "props": true, "ignorePropertyModificationsFor": ["item", "error"] }]
+  no-param-reassign: ["error", { "props": true, "ignorePropertyModificationsFor": ["item"] }]
   import/extensions: off
