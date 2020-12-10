@@ -14,12 +14,13 @@
 
 `make install`
 
-### download page
+### Downloading
 [![asciicast](https://asciinema.org/a/ja9EZybshfqLyhnswoubJEUEC.svg)](https://asciinema.org/a/ja9EZybshfqLyhnswoubJEUEC)
 
-### debug
+### Debug
 [![asciicast](https://asciinema.org/a/f4sZqwbDWxbWEIwdxpkp38YXH.svg)](https://asciinema.org/a/f4sZqwbDWxbWEIwdxpkp38YXH)
 
-
-### install & work
+### Install & work
 [![asciicast](https://asciinema.org/a/yrhmCvTbZbIlDgh6z2qKV6VlX.svg)](https://asciinema.org/a/yrhmCvTbZbIlDgh6z2qKV6VlX)
+### Show error
+[![asciicast](https://asciinema.org/a/dy4UKg8kM0usj4dnQmSCIx950.svg)](https://asciinema.org/a/dy4UKg8kM0usj4dnQmSCIx950)
