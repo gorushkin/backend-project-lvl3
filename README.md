@@ -4,10 +4,22 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/20822d95a14f7e26dbab/maintainability)](https://codeclimate.com/github/gorushkin/backend-project-lvl3/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/20822d95a14f7e26dbab/test_coverage)](https://codeclimate.com/github/gorushkin/backend-project-lvl3/test_coverage)
 
+# Page-loader
 
+## How to use:
 
+`page-loader --output outputfolder http://google.com`
+
+## install
+
+`make install`
+
+### download page
 [![asciicast](https://asciinema.org/a/ja9EZybshfqLyhnswoubJEUEC.svg)](https://asciinema.org/a/ja9EZybshfqLyhnswoubJEUEC)
 
+### debug
 [![asciicast](https://asciinema.org/a/f4sZqwbDWxbWEIwdxpkp38YXH.svg)](https://asciinema.org/a/f4sZqwbDWxbWEIwdxpkp38YXH)
 
+
+### install & work
 [![asciicast](https://asciinema.org/a/yrhmCvTbZbIlDgh6z2qKV6VlX.svg)](https://asciinema.org/a/yrhmCvTbZbIlDgh6z2qKV6VlX)
