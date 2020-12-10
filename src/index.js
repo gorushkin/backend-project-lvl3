@@ -4,6 +4,8 @@ import path from 'path';
 import cheerio from 'cheerio';
 import debug from 'debug';
 import 'axios-debug-log';
+import Listr from 'listr';
+import FriendlyError from './FriendlyError.js';
 
 const log = debug('page-loader');
 
@@ -16,85 +18,89 @@ const elements = {
   script: 'src',
 };
 
-const updateName = (url) => {
+const convertUrlToSlugName = (url) => {
   const { host, pathname } = new URL(url);
   return (`${host}${pathname}`).replace(/[^A-Za-z0-9]/g, '-').replace(/-$/i, '');
 };
 
-const createAssetsFolder = (assetsFolderPath) => fs
-  .promises.access(assetsFolderPath)
-  .then(() => console.log('Folder exists'))
-  .catch(() => {
-    log('assets folder does not exist');
-    log(`creating at ${assetsFolderPath}`);
-    return fs.promises.mkdir(assetsFolderPath);
-  });
+const createAssetsFolder = (assetsFolderPath, html) => fs
+  .promises.mkdir(assetsFolderPath).then(() => html);
 
 const getHtmlFile = (targetUrl) => axios
   .get(targetUrl.href)
   .then((response) => cheerio.load(response.data, { decodeEntities: false }));
 
 const getElementFilename = (source) => {
-  const { ext, name } = path.parse(source);
+  const { ext, name, dir } = path.parse(source);
   const extension = ext || '.html';
-  const namePrefix = updateName(path.dirname(source));
-  return `${namePrefix}-${name}${extension}`;
+  const filename = convertUrlToSlugName(path.join(dir, name));
+  return `${filename}${extension}`;
 };
 
-const isSourceLocal = (source, url) => (new URL(source, url.href)).origin === url.origin;
-
-const getSources = (html, url, assetsFolderName) => {
+const getSources = (parsedDom, targetUrl, assetsFolderName) => {
   const sources = Object.entries(elements).reduce((acc, [itemName, itemSrcAttribute]) => {
-    const itemSources = html(itemName)
+    const itemSources = parsedDom(itemName)
       .toArray()
       .map((item) => {
-        const source = (new URL(html(item).attr(itemSrcAttribute), url.href)).href;
-        const filename = getElementFilename(source);
-        return {
-          ...item,
-          source,
-          filename,
-          tag: itemSrcAttribute,
-          url: path.join(assetsFolderName, filename),
-        };
+        const url = (new URL(item.attribs[itemSrcAttribute], targetUrl));
+        return { item, url };
       })
-      .filter(({ source }) => isSourceLocal(source, url));
+      .filter(({ url }) => url.origin === targetUrl.origin)
+      .map(({ item, url: { href } }) => {
+        const filename = getElementFilename(href);
+        item.attribs[itemSrcAttribute] = path.join(assetsFolderName, filename);
+        return { url: href, filename };
+      });
     return [...acc, ...itemSources];
   }, []);
-  return [html, sources];
+  return [parsedDom, sources];
 };
 
-const downloadElements = (html, sources, folderPath, filePath) => {
-  const promises = sources.map((item) => {
-    log('dom element name', html(item).attr(item.tag));
-    log('item.source', item.source);
+const downloadElements = (parsedDom, sources, filePath, assetsFolderPath) => {
+  const downloadTasks = new Listr(sources.map((item) => {
+    log('dom element name', parsedDom(item).attr(item.tag));
+    log('item.url', item.url);
     log('item.filename', item.filename);
-    html(item).attr(item.tag, item.url);
-    return axios
-      .get(item.source, {
-        responseType: 'arraybuffer',
-      })
-      .then((response) => {
-        const itemPath = path.join(folderPath, item.filename);
-        log('itemPath', itemPath);
-        return fs.promises.writeFile(itemPath, response.data, 'utf-8').catch(console.error);
-      });
-  });
-  return fs.promises.writeFile(filePath, html.html(), 'utf-8').then(() => Promise.all(promises));
+    return {
+      title: item.url,
+      task: () => axios
+        .get(item.url, {
+          responseType: 'arraybuffer',
+        })
+        .then((response) => {
+          const itemPath = path.join(assetsFolderPath, item.filename);
+          log('itemPath', itemPath);
+          return fs.promises.writeFile(itemPath, response.data, 'utf-8');
+        })
+        .catch((error) => console.log(`Could not download ${error.config.url}.Got response ${error.message}`)),
+    };
+  }), { concurrent: true });
+  return fs.promises.writeFile(filePath, parsedDom.html(), 'utf-8').then(() => downloadTasks.run());
 };
 
 export default (output, url) => {
   const targetUrl = new URL(url);
   const pathToProject = path.resolve(process.cwd(), output);
-  const projectName = updateName(url);
+  const projectName = convertUrlToSlugName(url);
   const filePath = path.join(pathToProject, `${projectName}.html`);
   const assetsFolderName = `${projectName}_files`;
   const assetsFolderPath = path.join(pathToProject, assetsFolderName);
 
-  return createAssetsFolder(assetsFolderPath)
-    .then(() => getHtmlFile(targetUrl))
-    .then((html) => getSources(html, targetUrl, assetsFolderName))
-    .then(([html, sources]) => downloadElements(html, sources, assetsFolderPath, filePath))
+  return getHtmlFile(targetUrl)
+    .then((parsedDom) => createAssetsFolder(assetsFolderPath, parsedDom))
+    .then((parsedDom) => getSources(
+      parsedDom,
+      targetUrl,
+      assetsFolderName,
+    ))
+    .then(([parsedDom, sources]) => downloadElements(
+      parsedDom,
+      sources,
+      filePath,
+      assetsFolderPath,
+    ))
     .then(() => pathToProject)
-    .catch(console.error);
+    .catch((error) => {
+      throw new FriendlyError(error);
+    });
 };
