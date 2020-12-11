@@ -24,8 +24,8 @@ const origin = 'https://ru.hexlet.io';
 const testData = {
   html: {
     testName: 'test get/write html',
-    outputFilenames: 'ru-hexlet-io-courses--expected.html',
-    expectedFile: fs.readFileSync(getFilePath('ru-hexlet-io-courses--input.html'), 'utf-8'),
+    outputFilenames: 'ru-hexlet-io-courses-expected.html',
+    expectedFile: fs.readFileSync(getFilePath('ru-hexlet-io-courses-input.html'), 'utf-8'),
   },
   img: {
     testName: 'test get/write img',
@@ -33,17 +33,17 @@ const testData = {
       'ru-hexlet-io-assets-professions-img01.jpg',
       'ru-hexlet-io-assets-professions-img02.jpg',
     ],
-    expectedFile: getFile('img.jpg'),
+    expectedFile: getFile('ru-hexlet-io-courses-img.jpg'),
   },
   css: {
     testName: 'test get/write css',
     outputFilenames: ['ru-hexlet-io-assets-application.css', 'ru-hexlet-io-css-ma-in.css'],
-    expectedFile: getFile('style.css'),
+    expectedFile: getFile('ru-hexlet-io-courses-style.css'),
   },
   js: {
     testName: 'test get/write js',
     outputFilenames: ['ru-hexlet-io-packs-js-runtime.js'],
-    expectedFile: getFile('script.js'),
+    expectedFile: getFile('ru-hexlet-io-courses-script.js'),
   },
 };
 
