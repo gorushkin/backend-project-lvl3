@@ -1,8 +1,5 @@
 install:
-	npm install
-
-build:
-	npm run build
+	npm ci
 
 test:
 	npm test

@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 import program from 'commander';
 
-import pageLoader from '../index.js';
+import pageLoader from '../src/index.js';
 
 program
   .version('1.0.0')
-  .option('--output [type]', 'output dir', '')
+  .option('-o, --output [path]', 'output dir', process.cwd())
   .arguments('<url>')
-  .description('Page-loader')
+  .description('Page-loader: save web pages from internet')
   .action((url) => {
     pageLoader(program.output, url)
       .then((outputDir) => console.log(`Open ${outputDir}`))

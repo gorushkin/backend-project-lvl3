@@ -11,7 +11,7 @@ import {
   fileURLToPath,
 } from 'url';
 
-import pageLoader from '../src';
+import pageLoader from '../index';
 
 nock.disableNetConnect();
 axios.defaults.adapter = adapter;
