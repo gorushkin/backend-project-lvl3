@@ -1,135 +1,129 @@
 import fs from 'fs';
 import os from 'os';
-import path, { dirname } from 'path';
+import path, {
+  dirname,
+} from 'path';
 import nock from 'nock';
 import axios from 'axios';
 import prettier from 'prettier';
 import adapter from 'axios/lib/adapters/http';
-import { fileURLToPath } from 'url';
+import {
+  fileURLToPath,
+} from 'url';
 
 import pageLoader from '../src';
 
 nock.disableNetConnect();
 axios.defaults.adapter = adapter;
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename = fileURLToPath(
+  import.meta.url,
+);
 const __dirname = dirname(__filename);
 const getFilePath = (fileName) => path.join(__dirname, '..', '/__fixtures__/', fileName);
-const getFile = (name) => fs.readFileSync(getFilePath(name));
+const getFile = (name, encoding = 'utf-8') => fs.readFileSync(getFilePath(name), encoding);
 
 const url = 'https://ru.hexlet.io/courses/';
 const projectName = 'ru-hexlet-io-courses';
 const origin = 'https://ru.hexlet.io';
 
 const testData = {
-  html: {
-    testName: 'test get/write html',
-    outputFilenames: 'ru-hexlet-io-courses-expected.html',
-    expectedFile: fs.readFileSync(getFilePath('ru-hexlet-io-courses-input.html'), 'utf-8'),
+  html01: {
+    testName: 'test get/write html01',
+    outputFilename: 'ru-hexlet-io-courses.html',
+    inputFile: getFile('ru-hexlet-io-courses-input.html'),
+    expectedFile: getFile('ru-hexlet-io-courses-expected.html'),
+    dir: '',
+    url: '/courses/',
+    encoding: 'utf-8',
+    format: (file) => prettier.format(file, { parser: 'html' }),
   },
-  img: {
-    testName: 'test get/write img',
-    outputFilenames: [
-      'ru-hexlet-io-assets-professions-img01.jpg',
-      'ru-hexlet-io-assets-professions-img02.jpg',
-    ],
-    expectedFile: getFile('ru-hexlet-io-courses-img.jpg'),
+  html02: {
+    testName: 'test get/write html02',
+    outputFilename: 'ru-hexlet-io-courses.html',
+    inputFile: getFile('ru-hexlet-io-courses-input.html'),
+    expectedFile: getFile('ru-hexlet-io-courses-input.html'),
+    dir: `${projectName}_files`,
+    url: '/courses',
+    encoding: 'utf-8',
+    format: (file) => file,
   },
-  css: {
-    testName: 'test get/write css',
-    outputFilenames: ['ru-hexlet-io-assets-application.css', 'ru-hexlet-io-css-ma-in.css'],
+  img01: {
+    testName: 'test get/write img01',
+    outputFilename: 'ru-hexlet-io-assets-professions-img01.jpg',
+    inputFile: getFile('ru-hexlet-io-courses-img.jpg', null),
+    expectedFile: getFile('ru-hexlet-io-courses-img.jpg', null),
+    dir: `${projectName}_files`,
+    url: '/assets/professions/img01.jpg',
+    encoding: null,
+    format: (file) => file,
+  },
+  img02: {
+    testName: 'test get/write img02',
+    outputFilename: 'ru-hexlet-io-assets-professions-img02.jpg',
+    inputFile: getFile('ru-hexlet-io-courses-img.jpg', null),
+    expectedFile: getFile('ru-hexlet-io-courses-img.jpg', null),
+    dir: `${projectName}_files`,
+    url: '/assets/professions/img02.jpg',
+    encoding: null,
+    format: (file) => file,
+  },
+  css01: {
+    testName: 'test get/write css01',
+    outputFilename: 'ru-hexlet-io-assets-application.css',
+    inputFile: getFile('ru-hexlet-io-courses-style.css'),
     expectedFile: getFile('ru-hexlet-io-courses-style.css'),
+    dir: `${projectName}_files`,
+    url: '/assets/application.css',
+    encoding: 'utf-8',
+    format: (file) => file,
+  },
+  css02: {
+    testName: 'test get/write css02',
+    outputFilename: 'ru-hexlet-io-css-ma-in.css',
+    inputFile: getFile('ru-hexlet-io-courses-style.css'),
+    expectedFile: getFile('ru-hexlet-io-courses-style.css'),
+    dir: `${projectName}_files`,
+    url: '/css/ma!in.css',
+    encoding: 'utf-8',
+    format: (file) => file,
   },
   js: {
     testName: 'test get/write js',
-    outputFilenames: ['ru-hexlet-io-packs-js-runtime.js'],
+    outputFilename: 'ru-hexlet-io-packs-js-runtime.js',
+    inputFile: getFile('ru-hexlet-io-courses-script.js'),
     expectedFile: getFile('ru-hexlet-io-courses-script.js'),
+    dir: `${projectName}_files`,
+    url: '/packs/js/runtime.js',
+    encoding: 'utf-8',
+    format: (file) => file,
   },
 };
 
-const networkErrorNames = [
-  ['Request failed with status code 500', 500],
-  ['Request failed with status code 404', 404],
-  ['Request failed with status code 410', 410],
-];
-
 let tempDir;
 
-const tests = ['img', 'css', 'js'].map((format) => [
-  testData[format].testName,
-  testData[format].outputFilenames,
-  testData[format].expectedFile,
+const tests = Object.values(testData).map((item) => [
+  item.testName,
+  item.outputFilename,
+  item.expectedFile,
+  item.dir,
+  item.encoding,
+  item.format,
 ]);
 
 describe('successful tests', () => {
   beforeEach(async () => {
     tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
 
-    nock(origin).get('/courses/').reply(200, testData.html.expectedFile);
-    nock(origin)
-      .get('/assets/professions/img01.jpg')
-      .reply(200, testData.img.expectedFile);
-    nock(origin)
-      .get('/assets/professions/img02.jpg')
-      .reply(200, testData.img.expectedFile);
-    nock(origin)
-      .get('/assets/application.css')
-      .reply(200, testData.css.expectedFile);
-    nock(origin).get('/css/ma!in.css').reply(200, testData.css.expectedFile);
-    nock(origin).get('/courses').reply(200, '');
-    nock(origin).get('/packs/js/runtime.js').reply(200, testData.js.expectedFile);
-  });
-
-  test(testData.html.testName, async () => {
-    const expectedHtml = await fs.promises.readFile(
-      getFilePath(testData.html.outputFilenames),
-      'utf-8',
-    );
-
-    const dir = await pageLoader(tempDir, url);
-    const resultHtml = await fs.promises.readFile(path.join(dir, `${projectName}.html`), 'utf-8');
-    expect(prettier.format(resultHtml, { parser: 'html' })).toEqual(
-      prettier.format(expectedHtml, { parser: 'html' }),
-    );
-  });
-
-  test.each(tests)('%s,', async (_, outputFilenames, expectedFile) => {
-    const dir = await pageLoader(tempDir, url);
-    const outputFilePaths = outputFilenames.map((filename) => path.join(dir, `${projectName}_files`, filename));
-    const results = await Promise.all(
-      outputFilePaths.map(async (filePath) => fs.promises.readFile(filePath)),
-    );
-    results.forEach((file) => {
-      expect(expectedFile).toEqual(file);
+    Object.values(testData).forEach((item) => {
+      nock(origin).get(item.url).reply(200, item.inputFile);
     });
   });
-});
 
-describe('system errors', () => {
-  beforeEach(async () => {
-    tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-    nock(origin).get('/courses/').reply(200, testData.html.expectedFile);
-  });
-
-  test('Output folder is not exist', async () => {
-    const testDir = path.join(tempDir, '/temp');
-    await expect(pageLoader(testDir, url)).rejects.toThrow('Output folder does not exist');
-  });
-
-  test('Permission denied', async () => {
-    await fs.promises.chmod(tempDir, 0);
-    await expect(pageLoader(tempDir, url)).rejects.toThrow('Permission denied');
-  });
-});
-
-describe('network errors', () => {
-  beforeEach(async () => {
-    tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-  });
-
-  test.each(networkErrorNames)('%s,', async (errortext, statusCode) => {
-    nock(origin).get('/courses/').reply(statusCode, testData.html.expectedFile);
-    await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-    expect(pageLoader(tempDir, url)).rejects.toThrow(errortext);
+  test.each(tests)('%s,', async (_, outputFilename, expectedFile, outputDir, encoding, format) => {
+    const dir = await pageLoader(tempDir, url);
+    const outputFilePath = path.join(dir, outputDir, outputFilename);
+    const result = await fs.promises.readFile(outputFilePath, encoding);
+    expect(format(result)).toEqual(format(expectedFile));
   });
 });
