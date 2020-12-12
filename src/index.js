@@ -41,11 +41,11 @@ const getSources = (parsedDom, targetUrl, assetsFolderName) => {
   const sources = Object.entries(elements).reduce((acc, [itemName, itemSrcAttribute]) => {
     const itemSources = parsedDom(itemName)
       .toArray()
-      .map((item) => ({ item, url: new URL(item.attribs[itemSrcAttribute], targetUrl) }))
+      .map((item) => ({ item, url: new URL(parsedDom(item).attr(itemSrcAttribute), targetUrl) }))
       .filter(({ url }) => url.origin === targetUrl)
       .map(({ item, url: { href } }) => {
         const filename = getElementFilename(href);
-        item.attribs[itemSrcAttribute] = path.join(assetsFolderName, filename);
+        parsedDom(item).attr(itemSrcAttribute, path.join(assetsFolderName, filename));
         return { url: href, filename };
       });
     return [...acc, ...itemSources];
