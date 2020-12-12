@@ -41,11 +41,8 @@ const getSources = (parsedDom, targetUrl, assetsFolderName) => {
   const sources = Object.entries(elements).reduce((acc, [itemName, itemSrcAttribute]) => {
     const itemSources = parsedDom(itemName)
       .toArray()
-      .map((item) => {
-        const url = (new URL(item.attribs[itemSrcAttribute], targetUrl));
-        return { item, url };
-      })
-      .filter(({ url }) => url.origin === targetUrl.origin)
+      .map((item) => ({ item, url: new URL(item.attribs[itemSrcAttribute], targetUrl) }))
+      .filter(({ url }) => url.origin === targetUrl)
       .map(({ item, url: { href } }) => {
         const filename = getElementFilename(href);
         item.attribs[itemSrcAttribute] = path.join(assetsFolderName, filename);
@@ -58,7 +55,6 @@ const getSources = (parsedDom, targetUrl, assetsFolderName) => {
 
 const downloadElements = (parsedDom, sources, filePath, assetsFolderPath) => {
   const downloadTasks = new Listr(sources.map((item) => {
-    log('dom element name', parsedDom(item).attr(item.tag));
     log('item.url', item.url);
     log('item.filename', item.filename);
     return {
@@ -90,7 +86,7 @@ export default (output, url) => {
     .then((parsedDom) => createAssetsFolder(assetsFolderPath, parsedDom))
     .then((parsedDom) => getSources(
       parsedDom,
-      targetUrl,
+      targetUrl.origin,
       assetsFolderName,
     ))
     .then(([parsedDom, sources]) => downloadElements(
