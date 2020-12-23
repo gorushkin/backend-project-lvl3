@@ -72,8 +72,8 @@ const networkErrorTests = [
 
 beforeAll(async () => {
   tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-  nock('https://ru.hexlet.io/').get('/courses/').reply(200, htmlData.inputFile);
-  nock('https://ru.hexlet.io/').get('/courses').reply(200, htmlData.inputFile);
+  nock(origin).get('/courses/').reply(200, htmlData.inputFile);
+  nock(origin).get('/courses').reply(200, htmlData.inputFile);
   testData.forEach((item) => {
     nock(origin).get(item.url).reply(200, item.expectedFile);
   });
@@ -98,33 +98,21 @@ describe('positive cases', () => {
   );
 });
 
-// describe.skip('successful tests', () => {
-//   beforeEach(async () => {
-//     tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
+describe('network errors', () => {
+  beforeEach(async () => {
+    tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
+  });
 
-//     Object.values(testData).forEach((item) => {
-//       nock(origin).get(item.url).reply(200, item.inputFile);
-//     });
-//   });
+  test.each(networkErrorTests)('%s,', async (errortext, statusCode) => {
+    nock(origin).get('/courses/').reply(statusCode, htmlData.expectedFile);
+    expect(pageLoader(tempDir, url)).rejects.toThrow(errortext);
+  });
+});
 
-//   test.each(tests)(
-//     '%s,',
-//     async (_, outputFilename, expectedFile, outputDirectory, encoding, format) => {
-//       const dir = await pageLoader(tempDir, url);
-//       const outputFilePath = path.join(dir, outputDirectory, outputFilename);
-//       const result = await fs.promises.readFile(outputFilePath, encoding);
-//       expect(format(result)).toEqual(format(expectedFile));
-//     }
-//   );
-// });
 
 // describe('file system errors', () => {
-//   beforeEach(async () => {
-//     tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-//     nock(origin).get('/courses/').reply(200, testData.html01.expectedFile);
-//   });
-
 //   test('Output folder is not exist', async () => {
+//     nock(origin).get('/courses/').reply(200, htmlData.expectedFile);
 //     const testDir = path.join(tempDir, '/temp');
 //     await expect(pageLoader(testDir, url)).rejects.toThrow('Output folder does not exist');
 //   });
@@ -135,13 +123,3 @@ describe('positive cases', () => {
 //   });
 // });
 
-// describe('network errors', () => {
-//   beforeEach(async () => {
-//     tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-//   });
-
-//   test.each(networkErrorTests)('%s,', async (errortext, statusCode) => {
-//     nock(origin).get('/courses/').reply(statusCode, testData.html01.expectedFile);
-//     expect(pageLoader(tempDir, url)).rejects.toThrow(errortext);
-//   });
-// });
