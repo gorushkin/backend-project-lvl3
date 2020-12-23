@@ -42,11 +42,14 @@ const getSources = (parsedDom, targetUrl, assetsFolderName) => {
   const sources = Object.entries(elements).reduce((acc, [itemName, itemSrcAttribute]) => {
     const itemSources = parsedDom(itemName)
       .toArray()
-      .map((item) => ({ item, url: new URL(parsedDom(item).attr(itemSrcAttribute), targetUrl) }))
-      .filter(({ url }) => url.origin === targetUrl)
-      .map(({ item, url: { href } }) => {
+      .map((item) => {
+        const element = parsedDom(item);
+        return { element, url: new URL(element.attr(itemSrcAttribute), targetUrl) };
+      })
+      .filter(({ url }) => url.origin === targetUrl.origin)
+      .map(({ element, url: { href } }) => {
         const filename = getElementFilename(href);
-        parsedDom(item).attr(itemSrcAttribute, path.join(assetsFolderName, filename));
+        element.attr(itemSrcAttribute, path.join(assetsFolderName, filename));
         return { url: href, filename };
       });
     return [...acc, ...itemSources];
@@ -90,7 +93,7 @@ export default (output, url) => {
 
   return getDOM(targetUrl)
     .then((parsedDom) => createAssetsFolder(assetsFolderPath, parsedDom))
-    .then((parsedDom) => getSources(parsedDom, targetUrl.origin, assetsFolderName))
+    .then((parsedDom) => getSources(parsedDom, targetUrl, assetsFolderName))
     .then(({ page, sources }) => createFile(page, filePath).then(() => sources))
     .then((sources) => downloadElements(sources, assetsFolderPath))
     .then(() => pathToProject)
