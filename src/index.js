@@ -51,10 +51,10 @@ const getSources = (parsedDom, targetUrl, assetsFolderName) => {
       });
     return [...acc, ...itemSources];
   }, []);
-  return [parsedDom, sources];
+  return { page: parsedDom.html(), sources };
 };
 
-const downloadElements = (parsedDom, sources, filePath, assetsFolderPath) => {
+const downloadElements = (sources, assetsFolderPath) => {
   const downloadTasks = sources.map((item) => {
     log('item.url', item.url);
     log('item.filename', item.filename);
@@ -75,10 +75,10 @@ const downloadElements = (parsedDom, sources, filePath, assetsFolderPath) => {
           ),
     };
   });
-  return fs.promises
-    .writeFile(filePath, parsedDom.html(), 'utf-8')
-    .then(() => new Listr(downloadTasks, { concurrent: true}).run());
+  return new Listr(downloadTasks, { concurrent: true }).run();
 };
+
+const createFile = (content, filePath) => fs.promises.writeFile(filePath, content, 'utf-8');
 
 export default (output, url) => {
   const targetUrl = new URL(url);
@@ -91,9 +91,8 @@ export default (output, url) => {
   return getDOM(targetUrl)
     .then((parsedDom) => createAssetsFolder(assetsFolderPath, parsedDom))
     .then((parsedDom) => getSources(parsedDom, targetUrl.origin, assetsFolderName))
-    .then(([parsedDom, sources]) =>
-      downloadElements(parsedDom, sources, filePath, assetsFolderPath)
-    )
+    .then(({ page, sources }) => createFile(page, filePath).then(() => sources))
+    .then((sources) => downloadElements(sources, assetsFolderPath))
     .then(() => pathToProject)
     .catch((error) => {
       throw new FriendlyError(error);
