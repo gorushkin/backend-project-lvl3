@@ -70,17 +70,17 @@ const networkErrorTests = [
   ['Request failed with status code 410', 410],
 ];
 
-beforeAll(async () => {
-  tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-  nock(origin).get('/courses/').reply(200, htmlData.inputFile);
-  nock(origin).get('/courses').reply(200, htmlData.inputFile);
-  testData.forEach((item) => {
-    nock(origin).get(item.url).reply(200, item.expectedFile);
-  });
-  dir = await pageLoader(tempDir, url);
-});
-
 describe('positive cases', () => {
+  beforeAll(async () => {
+    tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
+    nock(origin).get('/courses/').reply(200, htmlData.inputFile);
+    nock(origin).get('/courses').reply(200, htmlData.inputFile);
+    testData.forEach((item) => {
+      nock(origin).get(item.url).reply(200, item.expectedFile);
+    });
+    dir = await pageLoader(tempDir, url);
+  });
+
   test('load page', async () => {
     const resultHtml = await fs.promises.readFile(path.join(dir, `${projectName}.html`), 'utf-8');
     expect(prettier.format(resultHtml, { parser: 'html' })).toEqual(
@@ -109,17 +109,18 @@ describe('network errors', () => {
   });
 });
 
+describe('file system errors', () => {
+  beforeEach(async () => {
+    nock(origin).get('/courses/').reply(200, htmlData.expectedFile);
+  });
 
-// describe('file system errors', () => {
-//   test('Output folder is not exist', async () => {
-//     nock(origin).get('/courses/').reply(200, htmlData.expectedFile);
-//     const testDir = path.join(tempDir, '/temp');
-//     await expect(pageLoader(testDir, url)).rejects.toThrow('Output folder does not exist');
-//   });
+  test('Output folder is not exist', async () => {
+    const testDir = path.join(tempDir, '/temp');
+    await expect(pageLoader(testDir, url)).rejects.toThrow('Output folder does not exist');
+  });
 
-//   test('Permission denied', async () => {
-//     await fs.promises.chmod(tempDir, 0);
-//     await expect(pageLoader(tempDir, url)).rejects.toThrow('Permission denied');
-//   });
-// });
-
+  test('Permission denied', async () => {
+    await fs.promises.chmod(tempDir, 0);
+    await expect(pageLoader(tempDir, url)).rejects.toThrow('Permission denied');
+  });
+});
