@@ -72,13 +72,10 @@ const downloadElements = (sources, assetsFolderPath) => {
             const itemPath = path.join(assetsFolderPath, item.filename);
             log('itemPath', itemPath);
             return fs.promises.writeFile(itemPath, response.data, 'utf-8');
-          })
-          .catch((error) =>
-            console.log(`Could not download ${error.config.url}.Got response ${error.message}`)
-          ),
+          }),
     };
   });
-  return new Listr(downloadTasks, { concurrent: true }).run();
+  return new Listr(downloadTasks, { concurrent: true, exitOnError: false }).run();
 };
 
 const createFile = (content, filePath) => fs.promises.writeFile(filePath, content, 'utf-8');
