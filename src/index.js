@@ -6,6 +6,7 @@ import debug from 'debug';
 import 'axios-debug-log';
 import Listr from 'listr';
 import FriendlyError from './FriendlyError.js';
+import { isUndefined } from 'axios/lib/utils';
 
 const log = debug('page-loader');
 
@@ -23,10 +24,10 @@ const convertUrlToSlugName = (url) => {
   return `${host}${pathname}`.replace(/[^A-Za-z0-9]/g, '-').replace(/-$/i, '');
 };
 
-const createAssetsFolder = (assetsFolderPath, html) =>
-  fs.promises.mkdir(assetsFolderPath).then(() => html);
+const createAssetsFolder = (assetsFolderPath) =>
+  fs.promises.mkdir(assetsFolderPath);
 
-const getDOM = (targetUrl) =>
+const getParsedDom = (targetUrl) =>
   axios
     .get(targetUrl.href)
     .then((response) => cheerio.load(response.data, { decodeEntities: false }));
@@ -82,14 +83,14 @@ const createFile = (content, filePath) => fs.promises.writeFile(filePath, conten
 
 export default (output, url) => {
   const targetUrl = new URL(url);
-  const pathToProject = path.resolve(process.cwd(), output);
+  const pathToProject = path.resolve(process.cwd(), output || '');
   const projectName = convertUrlToSlugName(url);
   const filePath = path.join(pathToProject, `${projectName}.html`);
   const assetsFolderName = `${projectName}_files`;
   const assetsFolderPath = path.join(pathToProject, assetsFolderName);
 
-  return getDOM(targetUrl)
-    .then((parsedDom) => createAssetsFolder(assetsFolderPath, parsedDom))
+  return getParsedDom(targetUrl)
+    .then((parsedDom) => createAssetsFolder(assetsFolderPath, parsedDom).then(() => parsedDom))
     .then((parsedDom) => getSources(parsedDom, targetUrl, assetsFolderName))
     .then(({ page, sources }) => createFile(page, filePath).then(() => sources))
     .then((sources) => downloadElements(sources, assetsFolderPath))
