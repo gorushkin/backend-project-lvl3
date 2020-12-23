@@ -20,15 +20,16 @@ const elements = {
 
 const convertUrlToSlugName = (url) => {
   const { host, pathname } = new URL(url);
-  return (`${host}${pathname}`).replace(/[^A-Za-z0-9]/g, '-').replace(/-$/i, '');
+  return `${host}${pathname}`.replace(/[^A-Za-z0-9]/g, '-').replace(/-$/i, '');
 };
 
-const createAssetsFolder = (assetsFolderPath, html) => fs
-  .promises.mkdir(assetsFolderPath).then(() => html);
+const createAssetsFolder = (assetsFolderPath, html) =>
+  fs.promises.mkdir(assetsFolderPath).then(() => html);
 
-const getDOM = (targetUrl) => axios
-  .get(targetUrl.href)
-  .then((response) => cheerio.load(response.data, { decodeEntities: false }));
+const getDOM = (targetUrl) =>
+  axios
+    .get(targetUrl.href)
+    .then((response) => cheerio.load(response.data, { decodeEntities: false }));
 
 const getElementFilename = (source) => {
   const { ext, name, dir } = path.parse(source);
@@ -54,24 +55,29 @@ const getSources = (parsedDom, targetUrl, assetsFolderName) => {
 };
 
 const downloadElements = (parsedDom, sources, filePath, assetsFolderPath) => {
-  const downloadTasks = new Listr(sources.map((item) => {
+  const downloadTasks = sources.map((item) => {
     log('item.url', item.url);
     log('item.filename', item.filename);
     return {
       title: item.url,
-      task: () => axios
-        .get(item.url, {
-          responseType: 'arraybuffer',
-        })
-        .then((response) => {
-          const itemPath = path.join(assetsFolderPath, item.filename);
-          log('itemPath', itemPath);
-          return fs.promises.writeFile(itemPath, response.data, 'utf-8');
-        })
-        .catch((error) => console.log(`Could not download ${error.config.url}.Got response ${error.message}`)),
+      task: () =>
+        axios
+          .get(item.url, {
+            responseType: 'arraybuffer',
+          })
+          .then((response) => {
+            const itemPath = path.join(assetsFolderPath, item.filename);
+            log('itemPath', itemPath);
+            return fs.promises.writeFile(itemPath, response.data, 'utf-8');
+          })
+          .catch((error) =>
+            console.log(`Could not download ${error.config.url}.Got response ${error.message}`)
+          ),
     };
-  }), { concurrent: true });
-  return fs.promises.writeFile(filePath, parsedDom.html(), 'utf-8').then(() => downloadTasks.run());
+  });
+  return fs.promises
+    .writeFile(filePath, parsedDom.html(), 'utf-8')
+    .then(() => new Listr(downloadTasks, { concurrent: true}).run());
 };
 
 export default (output, url) => {
@@ -84,17 +90,10 @@ export default (output, url) => {
 
   return getDOM(targetUrl)
     .then((parsedDom) => createAssetsFolder(assetsFolderPath, parsedDom))
-    .then((parsedDom) => getSources(
-      parsedDom,
-      targetUrl.origin,
-      assetsFolderName,
-    ))
-    .then(([parsedDom, sources]) => downloadElements(
-      parsedDom,
-      sources,
-      filePath,
-      assetsFolderPath,
-    ))
+    .then((parsedDom) => getSources(parsedDom, targetUrl.origin, assetsFolderName))
+    .then(([parsedDom, sources]) =>
+      downloadElements(parsedDom, sources, filePath, assetsFolderPath)
+    )
     .then(() => pathToProject)
     .catch((error) => {
       throw new FriendlyError(error);
