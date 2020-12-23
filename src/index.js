@@ -26,7 +26,7 @@ const convertUrlToSlugName = (url) => {
 const createAssetsFolder = (assetsFolderPath, html) => fs
   .promises.mkdir(assetsFolderPath).then(() => html);
 
-const getHtmlFile = (targetUrl) => axios
+const getDOM = (targetUrl) => axios
   .get(targetUrl.href)
   .then((response) => cheerio.load(response.data, { decodeEntities: false }));
 
@@ -82,7 +82,7 @@ export default (output, url) => {
   const assetsFolderName = `${projectName}_files`;
   const assetsFolderPath = path.join(pathToProject, assetsFolderName);
 
-  return getHtmlFile(targetUrl)
+  return getDOM(targetUrl)
     .then((parsedDom) => createAssetsFolder(assetsFolderPath, parsedDom))
     .then((parsedDom) => getSources(
       parsedDom,
