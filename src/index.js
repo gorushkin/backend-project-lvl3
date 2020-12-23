@@ -6,7 +6,6 @@ import debug from 'debug';
 import 'axios-debug-log';
 import Listr from 'listr';
 import FriendlyError from './FriendlyError.js';
-import { isUndefined } from 'axios/lib/utils';
 
 const log = debug('page-loader');
 
@@ -24,13 +23,12 @@ const convertUrlToSlugName = (url) => {
   return `${host}${pathname}`.replace(/[^A-Za-z0-9]/g, '-').replace(/-$/i, '');
 };
 
-const createAssetsFolder = (assetsFolderPath) =>
-  fs.promises.mkdir(assetsFolderPath);
+const createAssetsFolder = (assetsFolderPath) => fs
+  .promises.mkdir(assetsFolderPath);
 
-const getParsedDom = (targetUrl) =>
-  axios
-    .get(targetUrl.href)
-    .then((response) => cheerio.load(response.data, { decodeEntities: false }));
+const getParsedDom = (targetUrl) => axios
+  .get(targetUrl.href)
+  .then((response) => cheerio.load(response.data, { decodeEntities: false }));
 
 const getElementFilename = (source) => {
   const { ext, name, dir } = path.parse(source);
@@ -64,16 +62,15 @@ const downloadElements = (sources, assetsFolderPath) => {
     log('item.filename', item.filename);
     return {
       title: item.url,
-      task: () =>
-        axios
-          .get(item.url, {
-            responseType: 'arraybuffer',
-          })
-          .then((response) => {
-            const itemPath = path.join(assetsFolderPath, item.filename);
-            log('itemPath', itemPath);
-            return fs.promises.writeFile(itemPath, response.data, 'utf-8');
-          }),
+      task: () => axios
+        .get(item.url, {
+          responseType: 'arraybuffer',
+        })
+        .then((response) => {
+          const itemPath = path.join(assetsFolderPath, item.filename);
+          log('itemPath', itemPath);
+          return fs.promises.writeFile(itemPath, response.data, 'utf-8');
+        }),
     };
   });
   return new Listr(downloadTasks, { concurrent: true, exitOnError: false }).run();

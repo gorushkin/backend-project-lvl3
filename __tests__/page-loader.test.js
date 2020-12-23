@@ -84,7 +84,7 @@ describe('positive cases', () => {
   test('load page', async () => {
     const resultHtml = await fs.promises.readFile(path.join(dir, `${projectName}.html`), 'utf-8');
     expect(prettier.format(resultHtml, { parser: 'html' })).toEqual(
-      prettier.format(htmlData.expectedFile, { parser: 'html' })
+      prettier.format(htmlData.expectedFile, { parser: 'html' }),
     );
   });
 
@@ -94,7 +94,7 @@ describe('positive cases', () => {
       const outputFilePath = path.join(dir, outputDirectory, outputFilename);
       const result = await fs.promises.readFile(outputFilePath);
       expect(result).toEqual(expectedFile);
-    }
+    },
   );
 });
 
