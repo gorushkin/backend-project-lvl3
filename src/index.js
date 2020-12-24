@@ -58,8 +58,8 @@ const getSources = (parsedDom, targetUrl, assetsFolderName) => {
 
 const downloadElements = (sources, assetsFolderPath) => {
   const downloadTasks = sources.map((item) => {
-    log('item.url', item.url);
-    log('item.filename', item.filename);
+    log('item will be downloaded from ', item.url);
+    log('item will be saved as', item.filename);
     return {
       title: item.url,
       task: () => axios
@@ -76,7 +76,7 @@ const downloadElements = (sources, assetsFolderPath) => {
   return new Listr(downloadTasks, { concurrent: true, exitOnError: false }).run();
 };
 
-const createFile = (content, filePath) => fs.promises.writeFile(filePath, content, 'utf-8');
+const saveFile = (content, filePath) => fs.promises.writeFile(filePath, content, 'utf-8');
 
 export default (output, url) => {
   const targetUrl = new URL(url);
@@ -89,7 +89,7 @@ export default (output, url) => {
   return getParsedDom(targetUrl)
     .then((parsedDom) => createAssetsFolder(assetsFolderPath, parsedDom).then(() => parsedDom))
     .then((parsedDom) => getSources(parsedDom, targetUrl, assetsFolderName))
-    .then(({ page, sources }) => createFile(page, filePath).then(() => sources))
+    .then(({ page, sources }) => saveFile(page, filePath).then(() => sources))
     .then((sources) => downloadElements(sources, assetsFolderPath))
     .then(() => pathToProject)
     .catch((error) => {
