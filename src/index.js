@@ -92,7 +92,4 @@ export default (output, url) => {
     .then(({ page, sources }) => saveFile(page, filePath).then(() => sources))
     .then((sources) => downloadElements(sources, assetsFolderPath))
     .then(() => pathToProject)
-    .catch((error) => {
-      throw new FriendlyError(error);
-    });
 };

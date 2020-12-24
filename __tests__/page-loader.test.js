@@ -83,7 +83,7 @@ describe('positive cases', () => {
   test('load page', async () => {
     const resultHtml = await fs.promises.readFile(path.join(dir, `${projectName}.html`), 'utf-8');
     expect(prettier.format(resultHtml, { parser: 'html' })).toEqual(
-      prettier.format(htmlData.expectedData, { parser: 'html' }),
+      prettier.format(htmlData.expectedData, { parser: 'html' })
     );
   });
 
@@ -93,7 +93,7 @@ describe('positive cases', () => {
       const outputFilePath = path.join(dir, outputDirectory, outputFilename);
       const result = await fs.promises.readFile(outputFilePath);
       expect(result).toEqual(expectedFile);
-    },
+    }
   );
 });
 
@@ -115,11 +115,15 @@ describe('file system errors', () => {
 
   test('Output folder is not exist', async () => {
     const testDir = path.join(tempDir, '/temp');
-    await expect(pageLoader(testDir, url)).rejects.toThrow('Output folder does not exist');
+    await expect(pageLoader(testDir, url)).rejects.toThrow(
+      `ENOENT: no such file or directory, mkdir '${testDir}/${outputDirectory}`
+    );
   });
 
   test('Permission denied', async () => {
     await fs.promises.chmod(tempDir, 0);
-    await expect(pageLoader(tempDir, url)).rejects.toThrow('Permission denied');
+    await expect(pageLoader(tempDir, url)).rejects.toThrow(
+      `EACCES: permission denied, mkdir '${tempDir}`
+    );
   });
 });
