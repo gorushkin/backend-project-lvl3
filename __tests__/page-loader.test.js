@@ -17,15 +17,15 @@ const __dirname = dirname(__filename);
 const getFilePath = (fileName) => path.join(__dirname, '..', '/__fixtures__/', fileName);
 const getFile = (name, encoding = null) => fs.readFileSync(getFilePath(name), encoding);
 
-const url = 'https://ru.hexlet.io/courses/';
+const url = 'https://ru.hexlet.io/courses';
 const projectName = 'ru-hexlet-io-courses';
 const origin = 'https://ru.hexlet.io';
 const outputDirectory = `${projectName}_files`;
 
 const htmlData = {
-  outputFilename: 'ru-hexlet-io-courses.html',
+  expextedFilePath: 'ru-hexlet-io-courses.html',
   inputFile: getFile('ru-hexlet-io-courses-input.html', 'utf-8'),
-  expectedFile: getFile('ru-hexlet-io-courses-expected.html', 'utf-8'),
+  expectedData: getFile('ru-hexlet-io-courses-expected.html', 'utf-8'),
 };
 
 const testData = [
@@ -73,8 +73,7 @@ const networkErrorTests = [
 describe('positive cases', () => {
   beforeAll(async () => {
     tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-    nock(origin).get('/courses/').reply(200, htmlData.inputFile);
-    nock(origin).get('/courses').reply(200, htmlData.inputFile);
+    nock(origin).get('/courses').twice().reply(200, htmlData.inputFile);
     testData.forEach((item) => {
       nock(origin).get(item.url).reply(200, item.expectedFile);
     });
@@ -84,7 +83,7 @@ describe('positive cases', () => {
   test('load page', async () => {
     const resultHtml = await fs.promises.readFile(path.join(dir, `${projectName}.html`), 'utf-8');
     expect(prettier.format(resultHtml, { parser: 'html' })).toEqual(
-      prettier.format(htmlData.expectedFile, { parser: 'html' }),
+      prettier.format(htmlData.expectedData, { parser: 'html' }),
     );
   });
 
@@ -104,14 +103,14 @@ describe('network errors', () => {
   });
 
   test.each(networkErrorTests)('%s,', async (errortext, statusCode) => {
-    nock(origin).get('/courses/').reply(statusCode, htmlData.expectedFile);
+    nock(origin).get('/courses').reply(statusCode, htmlData.expectedData);
     expect(pageLoader(tempDir, url)).rejects.toThrow(errortext);
   });
 });
 
 describe('file system errors', () => {
   beforeEach(async () => {
-    nock(origin).get('/courses/').reply(200, htmlData.expectedFile);
+    nock(origin).get('/courses').reply(200, htmlData.expectedData);
   });
 
   test('Output folder is not exist', async () => {
