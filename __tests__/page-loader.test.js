@@ -83,7 +83,7 @@ describe('positive cases', () => {
   test('load page', async () => {
     const resultHtml = await fs.promises.readFile(path.join(dir, `${projectName}.html`), 'utf-8');
     expect(prettier.format(resultHtml, { parser: 'html' })).toEqual(
-      prettier.format(htmlData.expectedData, { parser: 'html' })
+      prettier.format(htmlData.expectedData, { parser: 'html' }),
     );
   });
 
@@ -93,7 +93,7 @@ describe('positive cases', () => {
       const outputFilePath = path.join(dir, outputDirectory, outputFilename);
       const result = await fs.promises.readFile(outputFilePath);
       expect(result).toEqual(expectedFile);
-    }
+    },
   );
 });
 
@@ -126,5 +126,3 @@ describe('network errors', () => {
     await expect(pageLoader(tempDir, url)).rejects.toThrow(new RegExp(statusCode));
   });
 });
-
-

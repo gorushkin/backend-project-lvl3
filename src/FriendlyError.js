@@ -4,14 +4,16 @@ const defaultErrorMessage = 'Unknown error occurred';
 
 const systemErrorMapping = {
   ENOENT: 'Output folder does not exist',
-  ENOTFOUND: `Could not find the page`,
-  ECONNREFUSED: `Could not find the page`,
+  ENOTFOUND: 'Could not find the page',
+  ECONNREFUSED: 'Could not find the page',
   EACCES: 'Permission denied',
-  EEXIST: `Output folder is not empty`,
+  EEXIST: 'Output folder is not empty',
 };
 
 const getErrorMessage = (error) => {
-  const { isAxiosError, message, code, config = {}, path, response = {} } = error;
+  const {
+    message, code, config = {}, path, response = {},
+  } = error;
   const parts = _.compact([
     'Error occured:',
     message && `Reason: ${message}`,
