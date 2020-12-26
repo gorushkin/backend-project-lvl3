@@ -1,3 +1,3 @@
-import pageLoader from './src/index.js';
+import loadPage from './src/index.js';
 
-export default pageLoader;
+export default loadPage;

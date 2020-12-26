@@ -1,3 +1,4 @@
+import { URL } from 'url';
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
@@ -5,6 +6,7 @@ import cheerio from 'cheerio';
 import debug from 'debug';
 import 'axios-debug-log';
 import Listr from 'listr';
+import FriendlyError from './FriendlyError.js';
 
 const log = debug('page-loader');
 
@@ -90,5 +92,8 @@ export default (output, url) => {
     .then((parsedDom) => getSources(parsedDom, targetUrl, assetsFolderName))
     .then(({ page, sources }) => saveFile(page, filePath).then(() => sources))
     .then((sources) => downloadElements(sources, assetsFolderPath))
-    .then(() => pathToProject);
+    .then(() => pathToProject)
+    .catch((error) => {
+      throw new FriendlyError(error);
+    });
 };
