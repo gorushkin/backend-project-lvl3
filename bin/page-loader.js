@@ -9,7 +9,7 @@ program
   .arguments('<url>')
   .description('Page-loader: save web pages from internet')
   .action((url) => {
-    loadPage(program.output, url)
+    loadPage(url, program.output)
       .then((outputDir) => console.log(`Open ${outputDir}`))
       .catch(({ message }) => {
         console.error(message);

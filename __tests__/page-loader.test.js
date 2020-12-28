@@ -77,7 +77,7 @@ describe('positive cases', () => {
     testData.forEach((item) => {
       nock(origin).get(item.url).reply(200, item.expectedFile);
     });
-    dir = await pageLoader(tempDir, url);
+    dir = await pageLoader(url, tempDir);
   });
 
   test('load page', async () => {
@@ -106,12 +106,12 @@ describe('file system errors', () => {
 
   test('Output folder is not exist', async () => {
     const testDir = path.join(tempDir, '/temp');
-    await expect(pageLoader(testDir, url)).rejects.toThrow(/ENOENT/);
+    await expect(pageLoader(url, testDir)).rejects.toThrow(/ENOENT/);
   });
 
   test('Permission denied', async () => {
     await fs.promises.chmod(tempDir, 0);
-    await expect(pageLoader(tempDir, url)).rejects.toThrow(/EACCES/);
+    await expect(pageLoader(url, tempDir)).rejects.toThrow(/EACCES/);
   });
 });
 
@@ -123,6 +123,6 @@ describe('network errors', () => {
 
   test.each(networkErrorTests)('%s,', async (errortext, statusCode) => {
     nock(origin).get(pathname).reply(statusCode);
-    await expect(pageLoader(tempDir, url)).rejects.toThrow(new RegExp(statusCode));
+    await expect(pageLoader(url, tempDir)).rejects.toThrow(new RegExp(statusCode));
   });
 });

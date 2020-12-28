@@ -79,7 +79,7 @@ const downloadElements = (sources, assetsFolderPath) => {
 
 const saveFile = (content, filePath) => fs.promises.writeFile(filePath, content, 'utf-8');
 
-export default (output, url) => {
+export default (url, output) => {
   const targetUrl = new URL(url);
   const pathToProject = path.resolve(process.cwd(), output || '');
   const projectName = convertUrlToSlugName(url);
