@@ -3,7 +3,6 @@ import os from 'os';
 import path, { dirname } from 'path';
 import nock from 'nock';
 import axios from 'axios';
-import prettier from 'prettier';
 import adapter from 'axios/lib/adapters/http';
 import { fileURLToPath } from 'url';
 
@@ -82,9 +81,7 @@ describe('positive cases', () => {
 
   test('load page', async () => {
     const resultHtml = await fs.promises.readFile(path.join(dir, `${projectName}.html`), 'utf-8');
-    expect(prettier.format(resultHtml, { parser: 'html' })).toEqual(
-      prettier.format(htmlData.expectedData, { parser: 'html' }),
-    );
+    expect(resultHtml.trim()).toEqual(htmlData.expectedData.trim());
   });
 
   test.each(testData.map((item) => [item.testName, item.outputFilename, item.expectedFile]))(
