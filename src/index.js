@@ -94,6 +94,9 @@ export default (url, output) => {
     .then((sources) => downloadElements(sources, assetsFolderPath))
     .then(() => pathToProject)
     .catch((error) => {
-      throw new FriendlyError(error);
+      if (error.isAxiosError || !!error.code) {
+        throw new FriendlyError(error);
+      }
+      throw error;
     });
 };

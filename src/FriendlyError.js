@@ -1,36 +1,35 @@
 import _ from 'lodash';
+import systemErrorMapping from 'errno';
 
-const defaultErrorMessage = 'Unknown error occurred';
+const defaultErrorMessage = 'Unexpected error occurred';
 
-const systemErrorMapping = {
-  ENOENT: 'Output folder does not exist',
-  ENOTFOUND: 'Could not find the page',
-  ECONNREFUSED: 'Could not find the page',
-  EACCES: 'Permission denied',
-  EEXIST: 'Output folder is not empty',
-};
+const translateErrorCode = (code) => systemErrorMapping[code]?.description || defaultErrorMessage;
 
-const getErrorMessage = (error) => {
-  const {
-    message, code, config = {}, path, response = {},
-  } = error;
-  const parts = _.compact([
-    'Error occured:',
-    message && `Reason: ${message}`,
-    !message && code && `Reason: ${systemErrorMapping[code] || defaultErrorMessage}`,
-    code && `Code: ${code}`,
-    config.url && `URL: ${config.url}`,
-    response.status && `StatusCode: ${response.status}`,
-    response.statusText && `StatusText: ${response.statusText}`,
-    path && `Path: ${path}`,
-  ]);
+const messageBuilders = [
+  {
+    check: (error) => error?.isAxiosError,
+    buildMessage: ({
+      code, response, config, message,
+    }) => _.compact([translateErrorCode(code), response, config, message]).join('\n'),
+  },
+  {
+    check: (error) => !!error?.code,
 
-  return parts.join('\n');
-};
+    buildMessage: ({
+      code, response, config, message,
+    }) => _.compact([translateErrorCode(code), response, config, message]).join('\n'),
+  },
+  {
+    check: () => true,
+    buildMessage: ({ message }) => message,
+  },
+];
 
 export default class FriendlyError extends Error {
   constructor(error) {
     super(error);
-    this.message = getErrorMessage(error);
+    Error.captureStackTrace(this, FriendlyError);
+    const { buildMessage } = messageBuilders.find(({ check }) => check());
+    this.message = buildMessage(error);
   }
 }
